@@ -1,4 +1,6 @@
-PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True deepspeed --module openrlhf.cli.train_dpo  \
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
+
+deepspeed --module openrlhf.cli.train_dpo  \
     --model.model_name_or_path HuggingFaceTB/SmolLM2-360M \
     --model.beta 0.1 \
     --model.gradient_checkpointing_enable \
@@ -27,3 +29,4 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True deepspeed --module openrlhf.cli
 # HuggingFaceTB/SmolLM2-360M
 # unsloth/Llama-3.2-1B
 # meta-llama/Llama-3.2-1B
+# meta-llama/Llama-2-7b-hf
