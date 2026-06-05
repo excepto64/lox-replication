@@ -2,6 +2,7 @@
 
 model_name=$1
 
+source .venv/bin/activate
 source ~/lox-replication/.env
 hf auth login --token $HF_TOKEN
 

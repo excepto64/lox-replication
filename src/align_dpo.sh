@@ -4,12 +4,13 @@ model_name=$1
 online=$2
 
 
-scratch="/disk/scratch/s2028118/lox-replication"
+scratch=/disk/scratch/s2028118/lox-replication
 
 model_path=$model_name
 dataset_path=Anthropic/hh-rlhf
 
 if [ $online -eq 0 ]; then
+    mkdir /disk/scratch/s2028118
     mkdir $scratch
     rsync -a --exclude .env ~/lox-replication $scratch
     cd $scratch
