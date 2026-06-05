@@ -13,3 +13,5 @@ python src/LoX.py --base-model $model_name --model $fine_tune_name
 python src/graph.py
 
 rsync -a ${scratch}/ ~/lox-replication/
+
+rm -rf /disk/scratch/s2028118
