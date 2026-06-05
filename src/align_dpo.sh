@@ -2,7 +2,7 @@
 
 model_name=$1
 online=$2
-source .env
+
 
 scratch="disk/scratch/s2028118/lox-replication"
 
@@ -14,6 +14,7 @@ if [ $online -eq 0 ]; then
     export HF_DATASETS_OFFLINE=1
 fi
 
+source .env
 source .venv/bin/activate
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
