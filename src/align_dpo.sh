@@ -12,8 +12,11 @@ dataset_path=Anthropic/hh-rlhf
 if [ $online -eq 0 ]; then
     mkdir /disk/scratch/s2028118
     mkdir $scratch
+    echo created $scratch
     rsync -a --exclude .env ~/lox-replication $scratch
     cd $scratch
+    echo "In $(pwd)"
+
     export TRANSFORMERS_OFFLINE=1
     export HF_DATASETS_OFFLINE=1
     model_path=${scratch}/model/${model_name}
