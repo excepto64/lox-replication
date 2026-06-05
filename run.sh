@@ -15,7 +15,9 @@ source .venv/bin/activate
 # 
 if [$online -eq 0]; then
     ./download.sh $model_name
-    sbatch ./fine_tune.sh $model_name 0
+    sbatch ./align_dpo.sh $model_name 0
 else 
-    ./fine_tune.sh $model_name 1;
+    ./align_dpo.sh $model_name 1;
 fi
+
+python LoX.py --base-model "HuggingFaceTB/SmolLM2-360M" --model excepto64/lox_SmolLM2-360M_hhrlhf
