@@ -37,7 +37,7 @@ deepspeed --module openrlhf.cli.train_dpo  \
     --data.chosen_key chosen \
     --data.rejected_key rejected \
     --data.max_len 1024 \
-    --data.max_samples 8000 \
+    --data.max_samples 22500 \
     --train.batch_size 128 \
     --train.micro_batch_size 1 \
     --train.max_epochs 1 \

@@ -3,8 +3,10 @@
 online=0
 install=0
 
-model_name="HuggingFaceTB/SmolLM2-360M"
-fine_tune_name="excepto64/lox_SmolLM2-360M_hhrlhf"
+# model_name="HuggingFaceTB/SmolLM2-360M"
+model_name="meta-llama/Llama-3.2-1B"
+# fine_tune_name="excepto64/lox_SmolLM2-360M_hhrlhf"
+fine_tune_name="excepto64/lox_Llama-3.2-1B_hhrlhf"
 
 # Install dependencies
 if [ $install -eq 1 ]; then
