@@ -1,7 +1,7 @@
 #!/bin/bash
 
 online=0
-install=1
+install=0
 
 model_name="HuggingFaceTB/SmolLM2-360M"
 fine_tune_name="excepto64/lox_SmolLM2-360M_hhrlhf"
@@ -14,7 +14,7 @@ fi
 # Download and fine-tune model
 if [ $online -eq 0 ]; then
     ./src/download.sh $model_name
-    sbatch -p Teaching --gres=gpu:rtx_a6000:1 ./src/align_dpo.sh $model_name 0
+    sbatch -p Teaching --gres=gpu:nvidia_rtx_a6000:1 ./src/align_dpo.sh $model_name 0
 else 
     ./src/align_dpo.sh $model_name 1;
 fi
