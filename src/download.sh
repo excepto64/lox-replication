@@ -2,7 +2,7 @@
 
 model_name=$1
 
-source .env
+source ~/lox-replication/.env
 hf auth login --token $HF_TOKEN
 
 hf download $model_name --local-dir ./model/$model_name

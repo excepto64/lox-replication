@@ -11,7 +11,7 @@ dataset_path=Anthropic/hh-rlhf
 
 if [ $online -eq 0 ]; then
     mkdir $scratch
-    rsync -a ~/lox-replication $scratch
+    rsync -a --exclude .env ~/lox-replication $scratch
     cd $scratch
     export TRANSFORMERS_OFFLINE=1
     export HF_DATASETS_OFFLINE=1
@@ -19,7 +19,7 @@ if [ $online -eq 0 ]; then
     dataset_path=${scratch}/datasets/Anthropic/hh-rlhf
 fi
 
-source .env
+source ~/lox-replication/.env
 source .venv/bin/activate
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
