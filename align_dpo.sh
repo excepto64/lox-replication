@@ -14,6 +14,7 @@ source .venv/bin/activate
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
 
+# Modified from LoX paper.
 deepspeed --module openrlhf.cli.train_dpo  \
     --model.model_name_or_path $model_name \
     --model.beta 0.1 \
