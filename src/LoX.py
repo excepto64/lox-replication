@@ -22,8 +22,9 @@ def main():
 
     # Load the models
     #tokenizer = AutoTokenizer.from_pretrained(aligned_path)
-    aligned_model = AutoModelForCausalLM.from_pretrained(aligned_path, torch_dtype=torch.bfloat16)
     pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, torch_dtype=torch.bfloat16)
+    aligned_model = AutoModelForCausalLM.from_pretrained(aligned_path, torch_dtype=torch.bfloat16)
+    
 
     # Take their weights and compute difference.
     W_aligned = aligned_model.state_dict()
