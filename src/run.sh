@@ -1,12 +1,5 @@
 #!/bin/bash
 
-#SBATCH --gres=gpu:nvidia_rtx_a6000:1
-# #SBATCH --gres=gpu:3g.71gb
-#SBATCH --cpus-per-task=1
-#SBATCH --partition=Teaching
-#SBATCH --time=12:00:00
-#SBATCH --job-name=lox-align
-
 config=$1
 
 source $config
