@@ -69,8 +69,3 @@ else
 fi
 
 hf upload ${fine_tune_name} ./model 
-
-# HuggingFaceTB/SmolLM2-360M
-# unsloth/Llama-3.2-1B
-# meta-llama/Llama-3.2-1B
-# meta-llama/Llama-2-7b-hf
