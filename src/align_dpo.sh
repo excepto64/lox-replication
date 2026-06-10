@@ -1,39 +1,27 @@
 #!/bin/bash
 
 model_name=$1
-online=$2
+
+dataset_name=Anthropic/hh-rlhf
+scratch=/disk/scratch/s2028118/lox-replication/
 
 
-scratch=/disk/scratch/s2028118/lox-replication
-
-model_path=$model_name
-dataset_path=Anthropic/hh-rlhf
-
-if [ $online -eq 0 ]; then
-    mkdir /disk/scratch/s2028118
-    mkdir $scratch
-    echo created $scratch
-    rsync -a --exclude .env ~/lox-replication $scratch
-    cd $scratch
-    echo "In $(pwd)"
-
-    export TRANSFORMERS_OFFLINE=1
-    export HF_DATASETS_OFFLINE=1
-    model_path=${scratch}/model/${model_name}
-    dataset_path=${scratch}/datasets/Anthropic/hh-rlhf
-fi
+rsync -a --exclude .env --exclude .venv ~/lox-replication/ $scratch
+cd $scratch
+echo "In $(pwd)"
 
 source ~/lox-replication/.env
 source .venv/bin/activate
+. /home/htang2/toolchain-20251006/toolchain.rc
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
 
 # Modified from LoX paper.
 deepspeed --module openrlhf.cli.train_dpo  \
-    --model.model_name_or_path $model_path \
+    --model.model_name_or_path $model_name \
     --model.beta 0.1 \
     --model.gradient_checkpointing_enable \
-    --data.dataset $dataset_path \
+    --data.dataset $dataset_name \
     --data.chosen_key chosen \
     --data.rejected_key rejected \
     --data.max_len 1024 \
@@ -55,9 +43,8 @@ deepspeed --module openrlhf.cli.train_dpo  \
     --logger.wandb.key $WANDB_TOKEN \
     --ref.offload
 
-if [ $online -eq 0 ]; then
-    rsync -a ${scratch}/model/ ~/lox-replication/model/
-fi
+rsync -a ${scratch}/model/ ~/lox-replication/model/
+
 
 # HuggingFaceTB/SmolLM2-360M
 # unsloth/Llama-3.2-1B

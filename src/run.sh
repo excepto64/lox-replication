@@ -1,30 +1,30 @@
 #!/bin/bash
 
-online=0
-install=0
+#SBATCH --gres=gpu:nvidia_rtx_a6000
+#SBATCH --cpus-per-task=1
 
-# model_name="HuggingFaceTB/SmolLM2-360M"
-model_name="meta-llama/Llama-3.2-1B"
-# fine_tune_name="excepto64/lox_SmolLM2-360M_hhrlhf"
-fine_tune_name="excepto64/lox_Llama-3.2-1B_hhrlhf"
+install=1
+
+model_name="HuggingFaceTB/SmolLM2-360M"
+fine_tune_name="excepto64/lox_SmolLM2-360M_hhrlhf"
+# model_name="meta-llama/Llama-3.2-1B"
+# fine_tune_name="excepto64/lox_Llama-3.2-1B_hhrlhf"
+
+# Clear scratch space.
+rm -rf /disk/scratch/s2028118
 
 # Install dependencies
 if [ $install -eq 1 ]; then
     ./src/install.sh
+    echo "Dependencies installed!"
 fi
 
-# Download and fine-tune model
-if [ $online -eq 0 ]; then
-    ./src/download.sh $model_name
-    sbatch -p Teaching --gres=gpu:nvidia_rtx_a6000:1 ./src/align_dpo.sh $model_name 0
-else 
-    ./src/align_dpo.sh $model_name 1;
-fi
+# Fine-tune model
+echo "Initiate model fine-tuning."
+./src/align_dpo.sh $model_name 0
+echo "Model fine-tune complete."
 
 # Run analysis
-
-# if [ $online -eq 0 ]; then
-#     sbatch -p Teaching --gres=gpu:1 ./src/run_analysis.sh $model_name $fine_tune_name
-# else 
-#     ./src/run_analysis.sh $model_name $fine_tune_name
-# fi
+echo "Initiate model analysis."
+./src/run_analysis.sh $model_name $fine_tune_name
+echo "Model analysis complete."

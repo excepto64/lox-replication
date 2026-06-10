@@ -8,6 +8,7 @@ scratch="/disk/scratch/s2028118/lox-replication"
 cd $scratch
 
 source .venv/bin/activate
+. /home/htang2/toolchain-20251006/toolchain.rc
 
 python src/LoX.py --base-model $model_name --model $fine_tune_name
 python src/graph.py

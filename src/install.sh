@@ -1,9 +1,6 @@
 #!/bin/bash
 
-rm -rf /disk/scratch/s2028118
-
-mkdir /disk/scratch/s2028118
-mkdir /disk/scratch/s2028118/lox-replication
+mkdir -p /disk/scratch/s2028118/lox-replication
 cd /disk/scratch/s2028118/lox-replication
 
 pwd
@@ -11,11 +8,13 @@ ls -a
 
 # Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
 
-# Create venv
-uv venv --relocatable --python 3.12
-source .venv/bin/activate
 . /home/htang2/toolchain-20251006/toolchain.rc
+# Create venv
+uv venv --python 3.12
+source .venv/bin/activate
+
 export UV_LINK_MODE=copy
 
 # Install packages
