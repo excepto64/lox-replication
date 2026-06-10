@@ -1,31 +1,32 @@
 #!/bin/bash
 
-model_name=$1
-fine_tune_name=$2
+model_name=${1}
+fine_tune_name=${2}
+lora=${3}
 
 dataset_name=Anthropic/hh-rlhf
-scratch=/disk/scratch/s2028118/lox-replication/
+scratch=/disk/scratch/s2028118/lox-replication
 
 
-rsync -a --exclude .env --exclude .venv ~/lox-replication/ $scratch
-cd $scratch
+rsync -a --exclude .env --exclude .venv ~/lox-replication/ ${scratch}/
+cd ${scratch}
 echo "In $(pwd)"
 
 source ~/lox-replication/.env
 source .venv/bin/activate
 . /home/htang2/toolchain-20251006/toolchain.rc
 
-hf auth login --token $HF_TOKEN
+hf auth login --token ${HF_TOKEN}
 
 export CUDA_VISIBLE_DEVICES=0
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
 
 # Modified from LoX paper.
 deepspeed --module openrlhf.cli.train_dpo  \
-    --model.model_name_or_path $model_name \
+    --model.model_name_or_path ${model_name} \
     --model.beta 0.1 \
     --model.gradient_checkpointing_enable \
-    --data.dataset $dataset_name \
+    --data.dataset ${dataset_name} \
     --data.chosen_key chosen \
     --data.rejected_key rejected \
     --data.max_len 1024 \
@@ -40,17 +41,32 @@ deepspeed --module openrlhf.cli.train_dpo  \
     --ds.param_dtype bf16 \
     --ds.attn_implementation flash_attention_2 \
     --ds.adam_offload \
-    --ckpt.output_dir ./model \
+    --ds.lora.rank ${lora} \
+    --ds.lora.alpha $((${lora}*2)) \
+    --ckpt.output_dir ./model/${fine_tune_name} \
     --ckpt.save_steps -1 \
     --eval.steps -1 \
     --logger.logging_steps 1 \
-    --logger.wandb.key $WANDB_TOKEN \
+    --logger.wandb.key ${WANDB_TOKEN} \
     --ref.offload
 
-rsync -a ${scratch}model/ ~/lox-replication/model/
 
 
-hf upload $fine_tune_name ./model 
+
+if [ $lora -eq 0 ]; then
+    rsync -a ${scratch}/model/${fine_tune_name}/ ~/lox-replication/model/${fine_tune_name}
+else
+    python -m openrlhf.cli.lora_combiner \
+        --model_path ${model_name} \
+        --lora_path ./model/${fine_tune_name} \
+        --output_path ./model/${fine_tune_name}-combined \
+        --param_dtype bf16
+    rsync -a ${scratch}/model/${fine_tune_name}-combined/ ~/lox-replication/model/${fine_tune_name}
+fi
+
+
+
+hf upload ${fine_tune_name} ./model 
 
 # HuggingFaceTB/SmolLM2-360M
 # unsloth/Llama-3.2-1B
