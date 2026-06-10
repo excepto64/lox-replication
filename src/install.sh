@@ -13,6 +13,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Create venv
 uv venv --relocatable --python 3.12
 source .venv/bin/activate
+. /home/htang2/toolchain-20251006/toolchain.rc
+export UV_LINK_MODE=copy
 
 # Install packages
 uv pip install "torch==2.12.0" --index-url https://download.pytorch.org/whl/cu126
