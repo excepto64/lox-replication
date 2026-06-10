@@ -17,7 +17,7 @@ fi
 
 # Fine-tune model
 echo "Initiate model fine-tuning."
-./src/align_dpo.sh ${model_name} ${fine_tune_name} ${lora}
+./src/align_dpo.sh ${model_name} ${fine_tune_name} ${lora} ${num_epochs}
 echo "Model fine-tune complete."
 
 
