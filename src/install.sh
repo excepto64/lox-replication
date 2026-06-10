@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir /disk/scratch/s2028118
 mkdir /disk/scratch/s2028118/lox-replication
 cd /disk/scratch/s2028118/lox-replication
 
