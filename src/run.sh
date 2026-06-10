@@ -1,18 +1,17 @@
 #!/bin/bash
 
-# #SBATCH --gres=gpu:nvidia_rtx_a6000:1
-#SBATCH --gres=gpu:3g.71gb
+#SBATCH --gres=gpu:nvidia_rtx_a6000:1
+# #SBATCH --gres=gpu:3g.71gb
 #SBATCH --cpus-per-task=1
 #SBATCH --partition=Teaching
 #SBATCH --time=12:00:00
 #SBATCH --job-name=lox-align
 
-install=1
+config=$1
 
-model_name="HuggingFaceTB/SmolLM2-360M"
-fine_tune_name="excepto64/lox_SmolLM2-360M_hhrlhf"
-# model_name="meta-llama/Llama-3.2-1B"
-# fine_tune_name="excepto64/lox_Llama-3.2-1B_hhrlhf"
+source $config
+
+install=1
 
 # Clear scratch space.
 rm -rf /disk/scratch/s2028118
@@ -32,5 +31,5 @@ echo "Model fine-tune complete."
 
 # Run analysis
 echo "Initiate model analysis."
-./src/run_analysis.sh $model_name $fine_tune_name
+./src/run_analysis.sh $model_name $fine_tune_name $main_dim $sec_dim
 echo "Model analysis complete."

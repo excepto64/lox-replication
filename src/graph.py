@@ -1,5 +1,13 @@
 import torch
 import matplotlib.pyplot as plt
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--n-main", type=int, default=2048) # Number of main singular values to consider for extrapolation.
+parser.add_argument("--n-sec", type=int, default=512) # Number of extra singular values to consider for extrapolation.
+
+args = parser.parse_args()
+print(args)
 
 def find_cum(coeff):
     total = torch.sum(coeff**2)
@@ -9,31 +17,31 @@ def find_cum(coeff):
 def main():
     svd_coeffs = torch.load("SVD_coeffs.pt", weights_only = True)
 
-    n_320 = 0
-    cum_320 = torch.zeros(320)
-    n_960 = 0
-    cum_960 = torch.zeros(960)
+    n_sec = 0
+    cum_sec = torch.zeros(args.n_sec)
+    n_main = 0
+    cum_main = torch.zeros(args.n_main)
 
 
     for coeff in svd_coeffs:
         cum = find_cum(coeff)
-        if coeff.size()[0] == 320:
-            n_320 += 1
-            cum_320 += cum
-        elif coeff.size()[0] == 960:
-            n_960 += 1
-            cum_960 += cum
+        if coeff.size()[0] == args.n_main:
+            n_main += 1
+            cum_main += cum
+        elif coeff.size()[0] == args.n_sec:
+            n_sec += 1
+            cum_sec += cum
 
-    cum_320 /= n_320
-    cum_960 /= n_960
-    torch.save(cum_320, "cum_320.pt")
-    torch.save(cum_960, "cum_960.pt")
+    cum_main /= n_main
+    cum_sec /= n_sec
+    torch.save(cum_main, "cum_main.pt")
+    torch.save(cum_sec, "cum_sec.pt")
 
-    print(torch.where(cum_320 > 0.8)[0][0], cum_320[10])
-    print(torch.where(cum_960 > 0.8)[0][0], cum_960[10])
+    print(torch.where(cum_main > 0.8)[0][0], cum_main[10])
+    print(torch.where(cum_sec > 0.8)[0][0], cum_sec[10])
 
-    plt.plot(cum_320.numpy(), label = "320")
-    plt.plot(cum_960.numpy(), label = "960")
+    plt.plot(cum_main.numpy(), label = "Main")
+    plt.plot(cum_sec.numpy(), label = "Secondary")
     plt.xlabel("Singular Values")
     plt.ylabel("Cumulative Proportion")
     plt.legend()
