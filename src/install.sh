@@ -8,7 +8,7 @@ ls -a
 
 # Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="${HOME}/.local/bin:${PATH}"
 
 . /home/htang2/toolchain-20251006/toolchain.rc
 # Create venv
