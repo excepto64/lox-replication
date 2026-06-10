@@ -15,7 +15,7 @@ source ~/lox-replication/.env
 source .venv/bin/activate
 . /home/htang2/toolchain-20251006/toolchain.rc
 
-hf auth login $HF_TOKEN
+hf auth login --token $HF_TOKEN
 
 export CUDA_VISIBLE_DEVICES=0
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
