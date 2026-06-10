@@ -3,6 +3,9 @@
 mkdir /disk/scratch/s2028118/lox-replication
 cd /disk/scratch/s2028118/lox-replication
 
+pwd
+ls -a
+
 # Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
