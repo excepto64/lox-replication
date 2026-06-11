@@ -3,6 +3,8 @@
 
 SCRATCH=${1}
 
+echo $(date)
+
 rm -rf ${SCRATCH}
 mkdir -p ${SCRATCH}
 cd ${SCRATCH}

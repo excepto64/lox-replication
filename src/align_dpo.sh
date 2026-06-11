@@ -46,19 +46,19 @@ deepspeed --module openrlhf.cli.train_dpo  \
     --ds.attn_implementation flash_attention_2 \
     --ds.lora.rank ${lora} \
     --ds.lora.alpha $((${lora}*2)) \
-    --ckpt.output_dir ./model \
+    --ckpt.output_dir ./model/${fine_tune_name} \
     --ckpt.save_steps -1 \
     --eval.steps -1 \
     --logger.logging_steps 1 \
     --logger.wandb.key ${WANDB_TOKEN} \
 
 if [ $lora -eq 0 ]; then
-    rsync -a ${local_dir}/model/ ~/lox-replication/model/${fine_tune_name}/
-    hf upload ${fine_tune_name} ./model 
+    rsync -a ${local_dir}/model/${fine_tune_name} ~/lox-replication/model/${fine_tune_name}/
+    hf upload ${fine_tune_name} ./model/${fine_tune_name}
 else
     python -m openrlhf.cli.lora_combiner \
         --model_path ${model_name} \
-        --lora_path ./model \
+        --lora_path ./model/${fine_tune_name} \
         --output_path ./model-combined \
         --param_dtype bf16
     rsync -a ${local_dir}/model-combined/ ~/lox-replication/model/${fine_tune_name}

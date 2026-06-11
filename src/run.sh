@@ -4,6 +4,8 @@
 SCRATCH=${1}
 config=${2}
 
+echo $(date)
+
 source ${config}
 
 # Fine-tune model
