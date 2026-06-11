@@ -1,31 +1,29 @@
 #!/bin/bash
+# align_dpo.sh
 
-model_name=${1}
-fine_tune_name=${2}
-lora=${3}
-num_epochs=${4}
+set -e
 
+SCRATCH=${1}
+model_name=${2}
+fine_tune_name=${3}
+lora=${4}
+num_epochs=${5}
+
+local_dir=${SCRATCH}/lox_${fine_tune_name}
 dataset_name=Anthropic/hh-rlhf
-scratch=/disk/scratch/s2028118/lox-replication
-
-
-rsync -a --exclude .env --exclude .venv ~/lox-replication/ ${scratch}/
-cd ${scratch}
-echo "In $(pwd)"
 
 source ~/lox-replication/.env
-source .venv/bin/activate
-. /home/htang2/toolchain-20251006/toolchain.rc
+source ${SCRATCH}/.venv/bin/activate
+source /home/htang2/toolchain-20251006/toolchain.rc
+
+mkdir -p ${local_dir}
+rsync -a --exclude .env --exclude .venv ~/lox-replication/ ${local_dir}/
+cd ${local_dir}
+echo "In $(pwd)"
 
 hf auth login --token ${HF_TOKEN} --no-add-to-git-credential
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
-
-while true; do
-    sleep 1800  # every 30 mins
-    rsync -a ${scratch}/model/${fine_tune_name}/ ~/lox-replication/model/${fine_tune_name}/
-done &
-RSYNC_PID=$!
 
 # Modified from LoX paper.
 deepspeed --module openrlhf.cli.train_dpo  \
@@ -48,21 +46,21 @@ deepspeed --module openrlhf.cli.train_dpo  \
     --ds.attn_implementation flash_attention_2 \
     --ds.lora.rank ${lora} \
     --ds.lora.alpha $((${lora}*2)) \
-    --ckpt.output_dir ./model/${fine_tune_name} \
+    --ckpt.output_dir ./model \
     --ckpt.save_steps -1 \
     --eval.steps -1 \
     --logger.logging_steps 1 \
     --logger.wandb.key ${WANDB_TOKEN} \
 
 if [ $lora -eq 0 ]; then
-    rsync -a ${scratch}/model/${fine_tune_name}/ ~/lox-replication/model/${fine_tune_name}
+    rsync -a ${local_dir}/model/ ~/lox-replication/model/${fine_tune_name}/
+    hf upload ${fine_tune_name} ./model 
 else
     python -m openrlhf.cli.lora_combiner \
         --model_path ${model_name} \
-        --lora_path ./model/${fine_tune_name} \
-        --output_path ./model/${fine_tune_name}-combined \
+        --lora_path ./model \
+        --output_path ./model-combined \
         --param_dtype bf16
-    rsync -a ${scratch}/model/${fine_tune_name}-combined/ ~/lox-replication/model/${fine_tune_name}
+    rsync -a ${local_dir}/model-combined/ ~/lox-replication/model/${fine_tune_name}
+    hf upload ${fine_tune_name} ./model-combined 
 fi
-
-hf upload ${fine_tune_name} ./model 

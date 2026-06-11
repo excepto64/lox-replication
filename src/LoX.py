@@ -38,8 +38,8 @@ def main():
         if len(dW_aligned[name].size()) > 1:
             U, S, Vt = torch.linalg.svd(dW_aligned[name].float(), full_matrices = False)
             output.append(S)
-
-    torch.save(output, "SVD_coeffs.pt")
+    out_name = f"SVF_coeffs_{args.aligned_path}.pt"
+    torch.save(output, out_name)
 
 if __name__ == "__main__":
     main()

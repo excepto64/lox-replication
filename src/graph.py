@@ -3,8 +3,10 @@ import matplotlib.pyplot as plt
 import argparse
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--model", type=str, default="meta-llama/Llama-2-7b-chat-hf")
+parser.add_argument("--base-model", type=str, default="meta-llama/Llama-2-7b-hf")
 parser.add_argument("--n-main", type=int, default=2048) # Number of main singular values to consider for extrapolation.
-parser.add_argument("--n-sec", type=int, default=512) # Number of extra singular values to consider for extrapolation.
+parser.add_argument("--n-sec", type=int, default=0) # Number of extra singular values to consider for extrapolation.
 
 args = parser.parse_args()
 print(args)
@@ -15,7 +17,7 @@ def find_cum(coeff):
     return cum
 
 def main():
-    svd_coeffs = torch.load("SVD_coeffs.pt", weights_only = True)
+    svd_coeffs = torch.load(f"SVF_coeffs_{args.model}.pt", weights_only = True)
     
     n_main = 0
     cum_main = torch.zeros(args.n_main)
@@ -34,12 +36,12 @@ def main():
             cum_sec += cum
 
     cum_main /= n_main
-    torch.save(cum_main, "cum_main.pt")
+    torch.save(cum_main, f"cum_main_{args.model}.pt")
     print(torch.where(cum_main > 0.8)[0][0], cum_main[10])
 
     if args.n_sec > 0:
         cum_sec /= n_sec
-        torch.save(cum_sec, "cum_sec.pt")
+        torch.save(cum_sec, f"cum_sec_{args.model}.pt")
         print(torch.where(cum_sec > 0.8)[0][0], cum_sec[10])
         plt.plot(cum_sec.numpy(), label = "Secondary")
 
@@ -48,7 +50,7 @@ def main():
     plt.ylabel("Cumulative Proportion")
     plt.legend()
     #plt.show()
-    plt.savefig("cumulative_proportion.pdf")
+    plt.savefig(f"cumulative_proportion_{args.model}.pdf")
 
 if __name__ == "__main__":
     main()

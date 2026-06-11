@@ -1,28 +1,17 @@
 #!/bin/bash
+# run.sh
 
-config=${1}
+SCRATCH=${1}
+config=${2}
 
 source ${config}
 
-install=1
-
-# Clear scratch space.
-rm -rf /disk/scratch/s2028118
-
-# Install dependencies
-if [ ${install} -eq 1 ]; then
-    ./src/install.sh
-    echo "Dependencies installed!"
-fi
-
 # Fine-tune model
 echo "Initiate model fine-tuning."
-./src/align_dpo.sh ${model_name} ${fine_tune_name} ${lora} ${num_epochs}
+./src/align_dpo.sh ${SCRATCH} ${model_name} ${fine_tune_name} ${lora} ${num_epochs}
 echo "Model fine-tune complete."
-
-
 
 # Run analysis
 echo "Initiate model analysis."
-./src/run_analysis.sh ${model_name} ${fine_tune_name} ${main_dim} ${sec_dim}
+./src/run_analysis.sh ${SCRATCH} ${model_name} ${fine_tune_name} ${main_dim} ${sec_dim}
 echo "Model analysis complete."
