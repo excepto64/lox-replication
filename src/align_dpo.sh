@@ -17,7 +17,7 @@ source ~/lox-replication/.env
 source .venv/bin/activate
 . /home/htang2/toolchain-20251006/toolchain.rc
 
-hf auth login --token ${HF_TOKEN}
+hf auth login --token ${HF_TOKEN} --no-add-to-git-credential
 
 export CUDA_VISIBLE_DEVICES=0
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
@@ -29,7 +29,7 @@ done &
 RSYNC_PID=$!
 
 # Modified from LoX paper.
-deepspeed --module openrlhf.cli.train_dpo  \
+deepspeed --num_gpus=1 --module openrlhf.cli.train_dpo  \
     --model.model_name_or_path ${model_name} \
     --model.beta 0.1 \
     --model.gradient_checkpointing_enable \
