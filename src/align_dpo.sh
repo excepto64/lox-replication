@@ -19,7 +19,6 @@ source .venv/bin/activate
 
 hf auth login --token ${HF_TOKEN} --no-add-to-git-credential
 
-export CUDA_VISIBLE_DEVICES=0
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
 
 while true; do
@@ -29,7 +28,7 @@ done &
 RSYNC_PID=$!
 
 # Modified from LoX paper.
-deepspeed --num_gpus=1 --module openrlhf.cli.train_dpo  \
+deepspeed --module openrlhf.cli.train_dpo  \
     --model.model_name_or_path ${model_name} \
     --model.beta 0.1 \
     --model.gradient_checkpointing_enable \
@@ -47,7 +46,6 @@ deepspeed --num_gpus=1 --module openrlhf.cli.train_dpo  \
     --ds.zero_stage 3 \
     --ds.param_dtype bf16 \
     --ds.attn_implementation flash_attention_2 \
-    --ds.adam_offload \
     --ds.lora.rank ${lora} \
     --ds.lora.alpha $((${lora}*2)) \
     --ckpt.output_dir ./model/${fine_tune_name} \
@@ -55,7 +53,6 @@ deepspeed --num_gpus=1 --module openrlhf.cli.train_dpo  \
     --eval.steps -1 \
     --logger.logging_steps 1 \
     --logger.wandb.key ${WANDB_TOKEN} \
-    --ref.offload
 
 if [ $lora -eq 0 ]; then
     rsync -a ${scratch}/model/${fine_tune_name}/ ~/lox-replication/model/${fine_tune_name}
