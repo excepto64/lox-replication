@@ -37,6 +37,7 @@ fi
 deepspeed --module openrlhf.cli.train_dpo  \
     --model.model_name_or_path ${model_name} \
     --model.beta 0.1 \
+    --model.gradient_checkpointing_enable \
     --data.dataset ${dataset_name} \
     --data.chosen_key chosen \
     --data.rejected_key rejected \
@@ -48,25 +49,24 @@ deepspeed --module openrlhf.cli.train_dpo  \
     --train.seed 48 \
     --adam.lr 5e-6 \
     --ds.packing_samples \
-    --ds.zero_stage ${ZERO_STAGE} \
+    --ds.zero_stage 3 \
     --ds.param_dtype bf16 \
     --ds.attn_implementation flash_attention_2 \
     --ds.lora.rank ${lora} \
     --ds.lora.alpha $((${lora}*2)) \
-    --ckpt.output_dir ./model/${fine_tune_name} \
+    --ckpt.output_dir ./model \
     --ckpt.save_steps -1 \
     --eval.steps -1 \
     --logger.logging_steps 1 \
-    --logger.wandb.key ${WANDB_TOKEN} \
-    ${GRAD_CKPT} 
+    --logger.wandb.key ${WANDB_TOKEN} 
 
 if [ $lora -eq 0 ]; then
-    rsync -a ${local_dir}/model/${fine_tune_name} ~/lox-replication/model/${fine_tune_name}/
-    hf upload ${fine_tune_name} ./model/${fine_tune_name}
+    rsync -a ${local_dir}/model ~/lox-replication/model/${fine_tune_name}/
+    hf upload ${fine_tune_name} ./model
 else
     python -m openrlhf.cli.lora_combiner \
         --model_path ${model_name} \
-        --lora_path ./model/${fine_tune_name} \
+        --lora_path ./model \
         --output_path ./model-combined \
         --param_dtype bf16
     rsync -a ${local_dir}/model-combined/ ~/lox-replication/model/${fine_tune_name}
