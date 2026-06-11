@@ -27,10 +27,10 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 if [ $lora -eq 0 ]; then
     GRAD_CKPT="--model.gradient_checkpointing_enable"
-    ZERO_STAGE="--ds.zero_stage 3"
+    ZERO_STAGE=3
 else
     GRAD_CKPT=""
-    ZERO_STAGE="--ds.zero_stage 2"
+    ZERO_STAGE=2
 fi
 
 # Modified from LoX paper.
