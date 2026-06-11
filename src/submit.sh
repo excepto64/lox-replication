@@ -3,7 +3,7 @@
 
 SCRATCH=/disk/scratch/s2028118
 
-runs=("SmolLM2-360M_r6_1e.cfg")
+runs=("SmolLM2-360M_r0_1e.cfg")
 
 install_id=$(sbatch \
         --partition Teaching \
