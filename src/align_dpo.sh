@@ -12,6 +12,8 @@ num_epochs=${5}
 local_dir=${SCRATCH}/lox_${fine_tune_name}
 dataset_name=Anthropic/hh-rlhf
 
+MASTER_PORT=$((29500 + ${SLURM_JOB_ID} % 1000))
+
 source ~/lox-replication/.env
 source ${SCRATCH}/.venv/bin/activate
 source /home/htang2/toolchain-20251006/toolchain.rc
@@ -34,7 +36,7 @@ else
 fi
 
 # Modified from LoX paper.
-deepspeed --module openrlhf.cli.train_dpo  \
+deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
     --model.model_name_or_path ${model_name} \
     --model.beta 0.1 \
     --model.gradient_checkpointing_enable \
