@@ -3,7 +3,7 @@
 
 SCRATCH=/disk/scratch/s2028118
 
-runs=("SmolLM2-360M_r0_1e.cfg")
+runs=("SmolLM2-360M_r6_1e.cfg")
 
 install_id=$(sbatch \
         --partition Teaching \
@@ -19,7 +19,6 @@ for run in "${runs[@]}"; do
         --partition Teaching \
         --gres=gpu:nvidia_rtx_a6000:1 \
         --cpus-per-task=1 \
-        --time=12:00:00 \
         --job-name=${job_name} \
         --dependency=afterok:${install_id} \
         ./src/run.sh ${SCRATCH} ${run} 

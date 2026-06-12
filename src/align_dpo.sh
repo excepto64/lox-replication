@@ -25,15 +25,13 @@ hf auth login --token ${HF_TOKEN} --no-add-to-git-credential
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
 
-# if [ $lora -eq 0 ]; then
-#     GRAD_CKPT="--model.gradient_checkpointing_enable"
-#     ZERO_STAGE=3
-# else
-#     GRAD_CKPT=""
-#     ZERO_STAGE=2
-# fi
-
-rm -rf ~/.cache/torch_extensions
+if [ $lora -eq 0 ]; then
+    GRAD_CKPT="--model.gradient_checkpointing_enable"
+    ZERO_STAGE=3
+else
+    GRAD_CKPT=""
+    ZERO_STAGE=2
+fi
 
 # Modified from LoX paper.
 deepspeed --module openrlhf.cli.train_dpo  \
@@ -51,7 +49,7 @@ deepspeed --module openrlhf.cli.train_dpo  \
     --train.seed 48 \
     --adam.lr 5e-6 \
     --ds.packing_samples \
-    --ds.zero_stage 3 \
+    --ds.zero_stage ${ZERO_STAGE} \
     --ds.param_dtype bf16 \
     --ds.attn_implementation flash_attention_2 \
     --ds.lora.rank ${lora} \
@@ -60,7 +58,8 @@ deepspeed --module openrlhf.cli.train_dpo  \
     --ckpt.save_steps -1 \
     --eval.steps -1 \
     --logger.logging_steps 1 \
-    --logger.wandb.key ${WANDB_TOKEN} 
+    --logger.wandb.key ${WANDB_TOKEN} \
+    ${GRAD_CKPT}
 
 if [ $lora -eq 0 ]; then
     rsync -a ${local_dir}/model ~/lox-replication/model/${fine_tune_name}/
