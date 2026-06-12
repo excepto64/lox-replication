@@ -25,13 +25,15 @@ hf auth login --token ${HF_TOKEN} --no-add-to-git-credential
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
 
-if [ $lora -eq 0 ]; then
-    GRAD_CKPT="--model.gradient_checkpointing_enable"
-    ZERO_STAGE=3
-else
-    GRAD_CKPT=""
-    ZERO_STAGE=2
-fi
+# if [ $lora -eq 0 ]; then
+#     GRAD_CKPT="--model.gradient_checkpointing_enable"
+#     ZERO_STAGE=3
+# else
+#     GRAD_CKPT=""
+#     ZERO_STAGE=2
+# fi
+
+rm -rf ~/.cache/torch_extensions
 
 # Modified from LoX paper.
 deepspeed --module openrlhf.cli.train_dpo  \
