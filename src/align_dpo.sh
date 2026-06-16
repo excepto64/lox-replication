@@ -8,8 +8,9 @@ model_name=${2}
 fine_tune_name=${3}
 lora=${4}
 num_epochs=${5}
+local_name=${fine_tune_name##*/}
 
-local_dir=${SCRATCH}/lox_${fine_tune_name}
+local_dir=${SCRATCH}/${local_name}
 dataset_name=Anthropic/hh-rlhf
 
 MASTER_PORT=$((29500 + ${SLURM_JOB_ID} % 1000))
@@ -63,15 +64,6 @@ deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
     --logger.wandb.key ${WANDB_TOKEN} \
     ${GRAD_CKPT}
 
-if [ $lora -eq 0 ]; then
-    rsync -a ${local_dir}/model ~/lox-replication/model/${fine_tune_name}/
-    hf upload ${fine_tune_name} ./model
-else
-    python -m openrlhf.cli.lora_combiner \
-        --model_path ${model_name} \
-        --lora_path ./model \
-        --output_path ./model-combined \
-        --param_dtype bf16
-    rsync -a ${local_dir}/model-combined/ ~/lox-replication/model/${fine_tune_name}
-    hf upload ${fine_tune_name} ./model-combined 
-fi
+mkdir -p ~/lox-replication/model/${local_name}/
+hf upload ${fine_tune_name} ./model
+rsync -a ${local_dir}/model ~/lox-replication/model/${local_name}/

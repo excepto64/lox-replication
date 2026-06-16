@@ -10,6 +10,7 @@ parser.add_argument("--n-sec", type=int, default=0) # Number of extra singular v
 
 args = parser.parse_args()
 print(args)
+model_local = args.model.split('/')[-1]
 
 def find_cum(coeff):
     total = torch.sum(coeff**2)
@@ -17,7 +18,7 @@ def find_cum(coeff):
     return cum
 
 def main():
-    svd_coeffs = torch.load(f"SVF_coeffs_{args.model}.pt", weights_only = True)
+    svd_coeffs = torch.load(f"SVF_coeffs_{model_local}.pt", weights_only = True)
     
     n_main = 0
     cum_main = torch.zeros(args.n_main)
@@ -36,12 +37,12 @@ def main():
             cum_sec += cum
 
     cum_main /= n_main
-    torch.save(cum_main, f"cum_main_{args.model}.pt")
+    torch.save(cum_main, f"cum_main_{model_local}.pt")
     print(torch.where(cum_main > 0.8)[0][0], cum_main[10])
 
     if args.n_sec > 0:
         cum_sec /= n_sec
-        torch.save(cum_sec, f"cum_sec_{args.model}.pt")
+        torch.save(cum_sec, f"cum_sec_{model_local}.pt")
         print(torch.where(cum_sec > 0.8)[0][0], cum_sec[10])
         plt.plot(cum_sec.numpy(), label = "Secondary")
 
@@ -50,7 +51,7 @@ def main():
     plt.ylabel("Cumulative Proportion")
     plt.legend()
     #plt.show()
-    plt.savefig(f"cumulative_proportion_{args.model}.pdf")
+    plt.savefig(f"cumulative_proportion_{model_local}.pdf")
 
 if __name__ == "__main__":
     main()
