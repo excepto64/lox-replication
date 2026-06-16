@@ -15,5 +15,5 @@ echo "Model fine-tune complete."
 
 # Run analysis
 echo "Initiate model analysis."
-./src/run_analysis.sh ${SCRATCH} ${model_name} ${fine_tune_name} ${main_dim} ${sec_dim}
+./src/run_analysis.sh ${SCRATCH} ${model_name} ${fine_tune_name} ${main_dim} ${sec_dim} ${lora}
 echo "Model analysis complete."

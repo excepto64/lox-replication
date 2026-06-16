@@ -9,7 +9,6 @@ parser.add_argument("--n-main", type=int, default=2048) # Number of main singula
 parser.add_argument("--n-sec", type=int, default=0) # Number of extra singular values to consider for extrapolation.
 
 args = parser.parse_args()
-print(args)
 model_local = args.model.split('/')[-1]
 
 def find_cum(coeff):
@@ -18,7 +17,7 @@ def find_cum(coeff):
     return cum
 
 def main():
-    svd_coeffs = torch.load(f"SVF_coeffs_{model_local}.pt", weights_only = True)
+    svd_coeffs = torch.load(f"SVD_coeffs_{model_local}.pt", weights_only = True)
     
     n_main = 0
     cum_main = torch.zeros(args.n_main)
