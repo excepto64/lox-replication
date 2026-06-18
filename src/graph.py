@@ -16,12 +16,12 @@ def find_cum(coeff):
     cum = torch.cumsum(coeff**2, dim = 0) / total
     return cum
 
-def main():
-    svd_coeffs = torch.load(f"SVD_coeffs_{model_local}.pt", weights_only = True)
-    
+def plot_cum(svd_coeffs):
     n_main = 0
     cum_main = torch.zeros(args.n_main)
     
+    plt.figure(0, figsize=(10, 6))
+
     if args.n_sec > 0:
         n_sec = 0
         cum_sec = torch.zeros(args.n_sec)
@@ -49,8 +49,47 @@ def main():
     plt.xlabel("Singular Values")
     plt.ylabel("Cumulative Proportion")
     plt.legend()
-    #plt.show()
     plt.savefig(f"cumulative_proportion_{model_local}.pdf")
+
+def plot_svd(svd_coeffs):
+    n_main = 0
+    sum_main = torch.zeros(args.n_main)
+
+    plt.figure(1, figsize=(10, 6))
+    
+    if args.n_sec > 0:
+        n_sec = 0
+        sum_sec = torch.zeros(args.n_sec)
+
+    for coeff in svd_coeffs:
+        if coeff.size()[0] == args.n_main:
+            n_main += 1
+            sum_main += coeff
+        elif coeff.size()[0] == args.n_sec and args.n_sec > 0:
+            n_sec += 1
+            sum_sec += coeff
+
+    sum_main /= n_main
+    torch.save(sum_main, f"sum_main_{model_local}.pt")
+
+    if args.n_sec > 0:
+        sum_sec /= n_sec
+        torch.save(sum_sec, f"sum_sec_{model_local}.pt")
+        plt.plot(sum_sec.numpy(), label = "Secondary", color = "blue", linewidth = 2, marker = "o", markersize = 4)
+
+    plt.plot(sum_main.numpy(), label = "Main", color = "orange", linewidth = 2, marker = "o", markersize = 4)
+    plt.xscale("log")
+    plt.xlabel("Singular Values")
+    plt.ylabel("Average Singular Value")
+    plt.legend()
+    plt.savefig(f"average_singular_value_{model_local}.pdf")
+
+def main():
+    svd_coeffs = torch.load(f"SVD_coeffs_{model_local}.pt", weights_only = True)
+    
+    plot_cum(svd_coeffs)
+
+    plot_svd(svd_coeffs)
 
 if __name__ == "__main__":
     main()
