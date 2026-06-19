@@ -13,6 +13,8 @@ lora=${6}
 local_name=${fine_tune_name##*/}
 local_dir=${SCRATCH}/${local_name}
 
+# source .venv/bin/activate
+
 source ${SCRATCH}/.venv/bin/activate
 source /home/htang2/toolchain-20251006/toolchain.rc
 

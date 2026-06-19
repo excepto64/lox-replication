@@ -21,5 +21,5 @@ for run in "${runs[@]}"; do
         --cpus-per-task=1 \
         --job-name=${job_name} \
         --dependency=afterok:${install_id} \
-        ./src/run.sh ${SCRATCH} ${run} 
+        ./src/run.sh ${SCRATCH} ${run}
 done
