@@ -2,3 +2,4 @@
 *.pt
 models
 dataset
+**/__pycache__
