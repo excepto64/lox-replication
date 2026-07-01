@@ -1,3 +1,6 @@
 base_model,model,dataset,mean_kl
 HuggingFaceTB/SmolLM2-360M,excepto64/lox_SmolLM2-360M_hhrlhf_r0_1e,hh-rlhf,0.025386695750057697
 HuggingFaceTB/SmolLM2-360M,excepto64/lox_SmolLM2-360M_hhrlhf_r0_1e,alpaca,0.003313697874546051
+HuggingFaceTB/SmolLM2-360M,excepto64/lox_SmolLM2-360M_hhrlhf_r0_1e,wikipedia,0.0061523145996034145
+HuggingFaceTB/SmolLM2-360M,excepto64/lox_SmolLM2-360M_hhrlhf_r0_1e,overrefusal,0.003705698763951659
+HuggingFaceTB/SmolLM2-360M,excepto64/lox_SmolLM2-360M_hhrlhf_r0_1e,overrefusal-toxic,0.004705477738752961
