@@ -23,13 +23,13 @@ def main():
 
     # Load the models
     #tokenizer = AutoTokenizer.from_pretrained(aligned_path)
-    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, torch_dtype=torch.float32)
+    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
     if args.lora > 0:
-        aligned_model = AutoModelForCausalLM.from_pretrained(args.base_model, torch_dtype=torch.float32)
+        aligned_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
         aligned_model = PeftModel.from_pretrained(aligned_model, args.model)
         aligned_model = aligned_model.merge_and_unload()
     else:
-        aligned_model = AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=torch.float32)
+        aligned_model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32)
 
     remove = ["model.embed_tokens.weight", "input_layernorm.weight", "post_attention_layernorm.weight", "model.norm.weight", "lm_head.weight"]
 

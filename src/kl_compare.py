@@ -29,8 +29,8 @@ args = parser.parse_args()
 def main():
     # Load the models
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
-    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, torch_dtype=torch.float32)
-    aligned_model = AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=torch.float32)
+    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
+    aligned_model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32)
 
     inputs = DATASETS[args.dataset]()
     if args.limit is not None:
