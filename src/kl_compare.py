@@ -6,14 +6,41 @@ import argparse
 import csv
 import os
 
-DATASETS = {
-    "hh-rlhf": lambda: load_dataset("Anthropic/hh-rlhf", split="test")["chosen"][:1000],
-    "alpaca": lambda: load_dataset("tatsu-lab/alpaca", split="train")["instruction"][:1000],
-    "wikipedia": lambda: [
-        t.split("\n\n")[0]
+def _hh_rlhf_examples():
+    examples = []
+    for chosen in load_dataset("Anthropic/hh-rlhf", split="test")["chosen"][:1000]:
+        marker = "\n\nAssistant:"
+        prompt, _, response = chosen.rpartition(marker)
+        if not prompt:
+            continue
+        examples.append({"prompt": prompt + marker, "response": response})
+    return examples
+
+def _alpaca_examples():
+    ds = load_dataset("tatsu-lab/alpaca", split="train")[:1000]
+    return [
+        {"prompt": text[: len(text) - len(output)], "response": output}
+        for text, output in zip(ds["text"], ds["output"])
+    ]
+
+def _wikipedia_examples():
+    return [
+        {"prompt": t.split("\n\n")[0], "response": ""}
         for t in load_dataset("wikimedia/wikipedia", "20231101.en", split="train")["text"][:1000]
-    ],
-    "overrefusal": lambda: load_dataset("bench-llm/or-bench", "or-bench-hard-1k", split="train")["prompt"][:1000],
+    ]
+
+def _or_bench_examples(config):
+    return [
+        {"prompt": p, "response": ""}
+        for p in load_dataset("bench-llm/or-bench", config, split="train")["prompt"][:1000]
+    ]
+
+DATASETS = {
+    "hh-rlhf": _hh_rlhf_examples,
+    "alpaca": _alpaca_examples,
+    "wikipedia": _wikipedia_examples,
+    "overrefusal": lambda: _or_bench_examples("or-bench-hard-1k"),
+    "overrefusal-toxic": lambda: _or_bench_examples("or-bench-toxic"),
 }
 
 parser = argparse.ArgumentParser()
@@ -53,27 +80,35 @@ def write_result(dataset_name, mean_kl):
             writer.writerow(["base_model", "model", "dataset", "mean_kl"])
         writer.writerow([args.base_model, args.model, dataset_name, mean_kl])
 
-def compute_kl_divergence(tokenizer, pretrained_model, aligned_model, input_texts):
+def compute_kl_divergence(tokenizer, pretrained_model, aligned_model, batch):
     tokenizer.pad_token = tokenizer.pad_token or tokenizer.eos_token
+    full_texts = [ex["prompt"] + ex["response"] for ex in batch]
     inputs = tokenizer(
-        input_texts, return_tensors="pt", padding=True, truncation=True, max_length=args.max_length
+        full_texts, return_tensors="pt", padding=True, truncation=True, max_length=args.max_length
     )
+    seq_lens = inputs["attention_mask"].sum(dim=1)
 
     with torch.no_grad():
         logits_base = pretrained_model(**inputs).logits
         logits_aligned = aligned_model(**inputs).logits
 
-    # index of the last non-padded token in each sequence
-    last_idx = inputs["attention_mask"].sum(dim=1) - 1
-    batch_idx = torch.arange(logits_base.size(0))
+    log_q = F.log_softmax(logits_base, dim=-1)
+    log_p = F.log_softmax(logits_aligned, dim=-1)
+    kl_per_token = (log_p.exp() * (log_p - log_q)).sum(dim=-1)  # (batch, seq)
 
-    log_q = F.log_softmax(logits_base[batch_idx, last_idx], dim=-1)
-    log_p = F.log_softmax(logits_aligned[batch_idx, last_idx], dim=-1)
-    p = log_p.exp()
+    # mask selects response-token positions (or the last prompt token if there's no response)
+    mask = torch.zeros_like(kl_per_token, dtype=torch.bool)
+    for i, ex in enumerate(batch):
+        end = seq_lens[i].item()
+        if ex["response"]:
+            prompt_len = len(tokenizer(ex["prompt"], truncation=True, max_length=args.max_length)["input_ids"])
+            start = min(prompt_len, end - 1)
+            mask[i, start:end] = True
+        else:
+            mask[i, end - 1] = True
 
-    kl_last = (p * (log_p - log_q)).sum(dim=-1)
-
-    return kl_last.mean()
+    per_example_kl = (kl_per_token * mask).sum(dim=1) / mask.sum(dim=1)
+    return per_example_kl.mean()
 
 
 

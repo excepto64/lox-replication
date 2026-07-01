@@ -1,0 +1,5 @@
+base_model,model,dataset,mean_kl
+HuggingFaceTB/SmolLM2-360M,excepto64/lox_SmolLM2-360M_hhrlhf_r0_1e,alpaca,0.004381940141320229
+HuggingFaceTB/SmolLM2-360M,excepto64/lox_SmolLM2-360M_hhrlhf_r0_1e,hh-rlhf,0.03548387661576271
+HuggingFaceTB/SmolLM2-360M,excepto64/lox_SmolLM2-360M_hhrlhf_r0_1e,overrefusal,0.0037057071924209593
+HuggingFaceTB/SmolLM2-360M,excepto64/lox_SmolLM2-360M_hhrlhf_r0_1e,wikipedia,0.0061523781158030035
