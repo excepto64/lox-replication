@@ -20,8 +20,8 @@ def main():
     aligned_path = args.model
 
     tokenizer = AutoTokenizer.from_pretrained(aligned_path)
-    aligned_model = AutoModelForCausalLM.from_pretrained(aligned_path, dtype=torch.bfloat16)
-    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.bfloat16)
+    aligned_model = AutoModelForCausalLM.from_pretrained(aligned_path, dtype=torch.float32)
+    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
 
     W_aligned = aligned_model.state_dict()
     W_base = pretrained_model.state_dict()

@@ -65,7 +65,7 @@ def main():
         inputs = inputs[:args.limit]
 
     kl_sum = 0.0
-    for i in tqdm(range(0, len(inputs), args.batch_size)):
+    for i in tqdm(range(0, len(inputs), args.batch_size), ncols=90):
         batch = inputs[i:i + args.batch_size]
         kl_sum += compute_kl_divergence(tokenizer, pretrained_model, aligned_model, batch).item() * len(batch)
     mean_kl = kl_sum / len(inputs)
