@@ -95,8 +95,9 @@ def compute_kl_divergence(tokenizer, pretrained_model, aligned_model, batch):
 
     log_q = F.log_softmax(logits_base, dim=-1)
     log_p = F.log_softmax(logits_aligned, dim=-1)
+    del logits_base, logits_aligned
     kl_per_token = (log_p.exp() * (log_p - log_q)).sum(dim=-1)  # (batch, seq)
-
+    del log_p, log_q
     # mask selects response-token positions (or the last prompt token if there's no response)
     mask = torch.zeros_like(kl_per_token, dtype=torch.bool)
     for i, ex in enumerate(batch):

@@ -23,6 +23,8 @@ def main():
     aligned_model = AutoModelForCausalLM.from_pretrained(aligned_path, dtype=torch.float32)
     pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
 
+    remove = ["model.embed_tokens.weight", "input_layernorm.weight", "post_attention_layernorm.weight", "model.norm.weight", "lm_head.weight"]
+
     W_aligned = aligned_model.state_dict()
     W_base = pretrained_model.state_dict()
 
@@ -31,7 +33,9 @@ def main():
     new_state_dict = {}
 
     for name in tqdm(dW_aligned):
-        if len(dW_aligned[name].size()) > 1:
+        if any(r in name for r in remove):
+            new_state_dict[name] = W_base[name] if args.base else W_aligned[name]
+        elif len(dW_aligned[name].size()) > 1:
             if k>0: 
                 U, S, Vt = torch.linalg.svd(dW_aligned[name].float(), full_matrices = False)
                 S[k:] = 0
