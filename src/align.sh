@@ -4,7 +4,8 @@
 set -e
 
 SCRATCH=${1}
-config=${2}
+seed=${2}
+config=${3}
 
 local_name=${fine_tune_name##*/}
 

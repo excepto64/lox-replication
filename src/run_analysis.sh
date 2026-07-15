@@ -4,11 +4,10 @@
 set -e
 
 SCRATCH=${1}
-model_name=${2}
-fine_tune_name=${3}
-main_dim=${4}
-sec_dim=${5}
-lora=${6}
+seed=${2}
+config=${3}
+
+source ${config}
 
 local_name=${fine_tune_name##*/}
 local_dir=${SCRATCH}/${local_name}
