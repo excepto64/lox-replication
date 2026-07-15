@@ -44,7 +44,6 @@ fi
 deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
     --model.model_name_or_path ${model_name} \
     --model.beta 0.1 \
-    --model.gradient_checkpointing_enable \
     --data.dataset ${dataset_name} \
     --data.chosen_key chosen \
     --data.rejected_key rejected \
@@ -73,4 +72,8 @@ deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
 
 mkdir -p ~/lox-replication/model/${local_name}/
 hf upload ${fine_tune_name} ./model
+for ckpt_dir in ./checkpoint/global_step*_hf; do
+    step=$(basename "$ckpt_dir" | sed -E 's/global_step([0-9]+)_hf/\1/')
+    hf upload ${fine_tune_name} "$ckpt_dir" --revision "step-${step}"
+done
 rsync -a ${local_dir}/model ~/lox-replication/model/${local_name}/
