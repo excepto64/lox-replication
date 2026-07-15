@@ -26,9 +26,17 @@ export UV_LINK_MODE=copy
 # Install packages
 uv pip install "torch==2.12.0" --index-url https://download.pytorch.org/whl/cu126
 uv pip install "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.9.17/flash_attn-2.8.3+cu126torch2.12-cp312-cp312-linux_x86_64.whl"
-uv pip install openrlhf --no-build-isolation
-uv pip install nvidia-ml-py
+uv pip install openrlhf==0.10.3 --no-build-isolation
+uv pip install nvidia-ml-py==13.610.43
 uv pip uninstall pynvml # Version conflict.
-uv pip install matplotlib
+uv pip install matplotlib==3.10.9
 
 echo "Dependencies installed!"
+
+# Add SGD optimizer support (--optim=sgd) to train_sft.py / train_dpo.py.
+# Patch is line/context-sensitive to openrlhf==0.10.3; if the pinned version
+# above changes, regenerate this patch against the new source.
+patch -p1 -d "$(python3 -c 'import openrlhf, os; print(os.path.dirname(openrlhf.__file__))')" \
+    < "src/patches/openrlhf-0.10.3-sgd.patch"
+
+echo "SGD optimizer patch applied!"

@@ -1,0 +1,123 @@
+diff -ruN a/cli/train_dpo.py b/cli/train_dpo.py
+--- a/cli/train_dpo.py	2026-07-15 16:01:11.549139859 +0100
++++ b/cli/train_dpo.py	2026-07-15 16:03:45.049383905 +0100
+@@ -128,6 +128,7 @@
+         optim=args.optim,
+         muon=vars(args.muon),
+         adam=vars(args.adam),
++        sgd=vars(args.sgd),
+         lr_scheduler=args.lr_scheduler,
+         lr_warmup_ratio=args.lr_warmup_ratio,
+         min_lr_ratio=args.min_lr_ratio,
+@@ -246,13 +247,14 @@
+         "--model.nll_loss_coef", type=float, default=0, help="Regularization with NLL loss, see LLama 3.1 tech report."
+     )
+ 
+-    # Optimizer + scheduler + grad clip.  Two sections:
++    # Optimizer + scheduler + grad clip.  Three sections:
+     #   --muon.*  Muon-specific hypers (only used when --optim=muon)
+     #   --adam.*  AdamW hypers — drives pure AdamW when --optim=adam,
+     #             and Muon's aux-Adam subgroup when --optim=muon.
++    #   --sgd.*   SGD hypers (only used when --optim=sgd)
+     # Note: DS v0.18.2 Muon ignores ns_steps / nesterov (hard-coded 5 / True) so
+     # they are intentionally not exposed here.
+-    parser.add_argument("--optim", type=str, default="adam", choices=["adam", "muon"])
++    parser.add_argument("--optim", type=str, default="adam", choices=["adam", "muon", "sgd"])
+     # Muon-specific
+     parser.add_argument("--muon.lr", type=float, default=0.02, help="LR for Muon 2D-weight group")
+     parser.add_argument("--muon.momentum", type=float, default=0.95)
+@@ -267,6 +269,10 @@
+     parser.add_argument("--adam.betas", type=float, nargs=2, default=(0.9, 0.95))
+     parser.add_argument("--adam.eps", type=float, default=1e-8)
+     parser.add_argument("--adam.weight_decay", type=float, default=0.0)
++    # SGD (used when --optim=sgd)
++    parser.add_argument("--sgd.lr", type=float, default=1e-2, help="SGD typically needs a much higher LR than Adam")
++    parser.add_argument("--sgd.momentum", type=float, default=0.9)
++    parser.add_argument("--sgd.weight_decay", type=float, default=0.0)
+     # Scheduler
+     parser.add_argument("--lr_scheduler", type=str, default="cosine_with_min_lr")
+     parser.add_argument("--lr_warmup_ratio", type=float, default=0.03)
+diff -ruN a/cli/train_sft.py b/cli/train_sft.py
+--- a/cli/train_sft.py	2026-07-15 16:01:11.546928587 +0100
++++ b/cli/train_sft.py	2026-07-15 16:03:21.590086948 +0100
+@@ -106,6 +106,7 @@
+         optim=args.optim,
+         muon=vars(args.muon),
+         adam=vars(args.adam),
++        sgd=vars(args.sgd),
+         lr_scheduler=args.lr_scheduler,
+         lr_warmup_ratio=args.lr_warmup_ratio,
+         min_lr_ratio=args.min_lr_ratio,
+@@ -214,13 +215,14 @@
+     parser.add_argument("--model.model_name_or_path", type=str, default=None)
+     parser.add_argument("--model.pretrain_mode_enable", action="store_true", default=False, help="Use pretrain loss")
+ 
+-    # Optimizer + scheduler + grad clip.  Two sections:
++    # Optimizer + scheduler + grad clip.  Three sections:
+     #   --muon.*  Muon-specific hypers (only used when --optim=muon)
+     #   --adam.*  AdamW hypers — drives pure AdamW when --optim=adam,
+     #             and Muon's aux-Adam subgroup when --optim=muon.
++    #   --sgd.*   SGD hypers (only used when --optim=sgd)
+     # Note: DS v0.18.2 Muon ignores ns_steps / nesterov (hard-coded 5 / True) so
+     # they are intentionally not exposed here.
+-    parser.add_argument("--optim", type=str, default="adam", choices=["adam", "muon"])
++    parser.add_argument("--optim", type=str, default="adam", choices=["adam", "muon", "sgd"])
+     # Muon-specific
+     parser.add_argument("--muon.lr", type=float, default=0.02, help="LR for Muon 2D-weight group")
+     parser.add_argument("--muon.momentum", type=float, default=0.95)
+@@ -235,6 +237,10 @@
+     parser.add_argument("--adam.betas", type=float, nargs=2, default=(0.9, 0.95))
+     parser.add_argument("--adam.eps", type=float, default=1e-8)
+     parser.add_argument("--adam.weight_decay", type=float, default=0.0)
++    # SGD (used when --optim=sgd)
++    parser.add_argument("--sgd.lr", type=float, default=1e-2, help="SGD typically needs a much higher LR than Adam")
++    parser.add_argument("--sgd.momentum", type=float, default=0.9)
++    parser.add_argument("--sgd.weight_decay", type=float, default=0.0)
+     # Scheduler
+     parser.add_argument("--lr_scheduler", type=str, default="cosine_with_min_lr")
+     parser.add_argument("--lr_warmup_ratio", type=float, default=0.03)
+diff -ruN a/utils/deepspeed/deepspeed.py b/utils/deepspeed/deepspeed.py
+--- a/utils/deepspeed/deepspeed.py	2026-07-15 16:01:11.540616833 +0100
++++ b/utils/deepspeed/deepspeed.py	2026-07-15 16:02:55.172908505 +0100
+@@ -260,9 +260,10 @@
+         * ``(model, cfg)`` — training.  ``cfg`` is a dict like::
+ 
+             {
+-              "optim": "muon" | "adam",          # selector
++              "optim": "muon" | "adam" | "sgd",  # selector
+               "muon":  {lr, momentum},           # Muon-specific; lr shared w/ aux-Adam
+               "adam":  {lr, betas, eps, weight_decay},
++              "sgd":   {lr, momentum, weight_decay},
+               "lr_scheduler": str,
+               "lr_warmup_ratio": float,
+               "min_lr_ratio": float,
+@@ -273,6 +274,9 @@
+           When ``optim="muon"``, the Muon group uses ``muon.lr`` / ``muon.momentum``;
+           the aux-Adam subgroup uses ``adam.lr`` / ``adam.betas`` / ``adam.eps``;
+           ``adam.weight_decay`` is shared (DS applies one scalar ``weight_decay`` to both groups).
++          When ``optim="sgd"``, DeepSpeed has no dedicated SGD branch and falls back to
++          ``getattr(torch.optim, "SGD")(model_parameters, **optimizer_parameters)`` — no
++          ZeRO-specific handling is required, unlike Muon.
+         * ``model`` — evaluation only, no optimizer.
+ 
+         Returns ``(model, optimizer, scheduler)`` for training entries and the
+@@ -354,6 +358,19 @@
+                     "weight_decay": adam["weight_decay"],  # shared by both groups (DS scalar)
+                 },
+             }
++        elif kind == "sgd":
++            sgd = cfg["sgd"]
++            # DS has no dedicated SGD branch; falls back to
++            # getattr(torch.optim, "SGD")(model_parameters, **optimizer_parameters),
++            # so no ZeRO-specific handling (unlike Muon) is required here.
++            optim_dict = {
++                "type": "SGD",
++                "params": {
++                    "lr": sgd["lr"],
++                    "momentum": sgd["momentum"],
++                    "weight_decay": sgd["weight_decay"],
++                },
++            }
+         else:
+             optim_dict = {
+                 "type": "AdamW",

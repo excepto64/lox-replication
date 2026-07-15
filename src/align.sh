@@ -38,11 +38,8 @@ if [ "${optimiser}" = "adam" ]; then
     optim="adam"
     lr="--adam.lr 5e-6"
 elif [ "${optimiser}" = "sgd" ]; then
-    # optim="sgd"
-    # lr="--sgd.lr te-6"
-    # TO DO - implement SGD
-    echo -e "SGD is not currently impemented. \n Execution stopped."
-    exit 1
+    optim="sgd"
+    lr="--sgd.lr 5e-6"
 else
     echo -e "Optimiser not recognised. \n Execution stopped."
     exit 1
