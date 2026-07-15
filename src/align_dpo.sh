@@ -8,6 +8,10 @@ model_name=${2}
 fine_tune_name=${3}
 lora=${4}
 num_epochs=${5}
+batch_size=${6}
+num_samples=${7}
+save_steps=${8}
+
 local_name=${fine_tune_name##*/}
 
 local_dir=${SCRATCH}/${local_name}
@@ -45,8 +49,8 @@ deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
     --data.chosen_key chosen \
     --data.rejected_key rejected \
     --data.max_len 1024 \
-    --data.max_samples 24000 \
-    --train.batch_size 128 \
+    --data.max_samples ${num_samples} \
+    --train.batch_size ${batch_size} \
     --train.micro_batch_size 1 \
     --train.max_epochs ${num_epochs} \
     --train.seed 48 \
@@ -58,7 +62,10 @@ deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
     --ds.lora.rank ${lora} \
     --ds.lora.alpha $((${lora}*2)) \
     --ckpt.output_dir ./model \
-    --ckpt.save_steps -1 \
+    --ckpt.save_steps ${save_steps} \
+    --ckpt.path ./checkpoint \
+    --ckpt.load_enable \
+    --ckpt.save_hf \
     --eval.steps -1 \
     --logger.logging_steps 1 \
     --logger.wandb.key ${WANDB_TOKEN} \
