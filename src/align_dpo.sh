@@ -45,7 +45,7 @@ deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
     --data.chosen_key chosen \
     --data.rejected_key rejected \
     --data.max_len 1024 \
-    --data.max_samples 22500 \
+    --data.max_samples 24000 \
     --train.batch_size 128 \
     --train.micro_batch_size 1 \
     --train.max_epochs ${num_epochs} \
