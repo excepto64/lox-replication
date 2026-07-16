@@ -1,11 +1,19 @@
 #!/bin/bash
 # submit.sh
 
-SCRATCH=bla
+# Run this from within the vm from within the lox-replication repo
 
-runs=("SmolLM2-360M_r6_1e.cfg" "SmolLM2-360M_r0_1e.cfg" "Llama-3_2-1B_r6_1e.cfg" "Llama-3_2-1B_r0_1e.cfg")
+SCRATCH=~/lox-replication
+
+runs=("SmolLM2-360M_test.cfg")
+seeds=(2 0 26)
+cluster=0
+
+./src/install.sh ${SCRATCH} ${cluster}
 
 for run in "${runs[@]}"; do
     source ${run}
-    ./src/run.sh ${SCRATCH} ${run}
+    for seed in "${seeds[@]}"; do
+    ./src/run.sh ${SCRATCH} ${seed} ${cluster} ${run}
+    done
 done

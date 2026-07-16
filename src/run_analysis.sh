@@ -5,7 +5,8 @@ set -e
 
 SCRATCH=${1}
 seed=${2}
-config=${3}
+cluster=${3}
+config=${4}
 
 source ${config}
 
@@ -15,11 +16,16 @@ local_dir=${SCRATCH}/${local_name}
 # source .venv/bin/activate
 
 source ${SCRATCH}/.venv/bin/activate
-source /home/htang2/toolchain-20251006/toolchain.rc
+if [ ${cluster} -eq 1 ]; then
+    source /home/htang2/toolchain-20251006/toolchain.rc
+    cd ${local_dir}
+fi
 
-cd ${local_dir}
+
 
 python src/LoX.py --base-model ${model_name} --model ${fine_tune_name} --lora ${lora}
 python src/graph.py --base-model ${model_name} --model ${fine_tune_name} --n-main ${main_dim} --n-sec ${sec_dim}
 
-rsync -a ${local_dir}/ ~/lox-replication/${local_name}
+if [ ${cluster} -eq 1 ]; then
+    rsync -a ${local_dir}/ ~/lox-replication/${local_name}
+fi

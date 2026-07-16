@@ -5,24 +5,35 @@ set -e
 
 SCRATCH=${1}
 seed=${2}
-config=${3}
+cluster=${3}
+config=${4}
+
+source ${config}
 
 local_name=${fine_tune_name##*/}
 
 local_dir=${SCRATCH}/${local_name}
 dataset_name=Anthropic/hh-rlhf
 
-MASTER_PORT=$((29500 + ${SLURM_JOB_ID} % 1000))
+if [ ${cluster} -eq 1 ]; then
+    MASTER_PORT=$((29500 + ${SLURM_JOB_ID} % 1000))
 
-source ~/lox-replication/.env
-source ${SCRATCH}/.venv/bin/activate
-source /home/htang2/toolchain-20251006/toolchain.rc
+    source ~/lox-replication/.env
+    source ${SCRATCH}/.venv/bin/activate
+    source /home/htang2/toolchain-20251006/toolchain.rc
 
-mkdir -p ${local_dir}
-rsync -a --exclude .env --exclude .venv ~/lox-replication/ ${local_dir}/
-cd ${local_dir}
-echo "In $(pwd)"
+    mkdir -p ${local_dir}
+    rsync -a --exclude .env --exclude .venv ~/lox-replication/ ${local_dir}/
+    cd ${local_dir}
 
+elif [ ${cluster} -eq 0 ]; then
+    MASTER_PORT=29500
+
+    source ${SCRATCH}/.env
+    source ${SCRATCH}/.venv/bin/activate
+fi
+
+echo "In $(pwd)"    
 hf auth login --token ${HF_TOKEN} --no-add-to-git-credential
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
@@ -114,4 +125,7 @@ for ckpt_dir in ./checkpoint/global_step*_hf; do
     step=$(basename "$ckpt_dir" | sed -E 's/global_step([0-9]+)_hf/\1/')
     hf upload ${fine_tune_name} "$ckpt_dir" --revision "step-${step}"
 done
-rsync -a ${local_dir}/model ~/lox-replication/model/${local_name}/
+
+if [ ${cluster} -eq 1 ]; then
+    rsync -a ${local_dir}/model ~/lox-replication/model/${local_name}/
+fi

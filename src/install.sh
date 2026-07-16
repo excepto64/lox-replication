@@ -2,12 +2,15 @@
 # install.sh
 
 SCRATCH=${1}
+cluster=${2}
 
 echo $(date)
 
-rm -rf ${SCRATCH}
-mkdir -p ${SCRATCH}
-cd ${SCRATCH}
+if [ ${cluster} -eq 1 ]; then
+    rm -rf ${SCRATCH}
+    mkdir -p ${SCRATCH}
+    cd ${SCRATCH}
+fi
 
 pwd
 ls -a
@@ -16,7 +19,9 @@ ls -a
 curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="${HOME}/.local/bin:${PATH}"
 
-source /home/htang2/toolchain-20251006/toolchain.rc
+if [ ${cluster} -eq 1 ]; then
+    source /home/htang2/toolchain-20251006/toolchain.rc
+fi
 # Create venv
 uv venv --python 3.12
 source .venv/bin/activate
