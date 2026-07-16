@@ -57,9 +57,27 @@ else
     exit 1
 fi
 
+UPLOADED_MARKER=$(mktemp)
+watch_and_upload_checkpoints() {
+    while true; do
+        for ckpt_dir in ./checkpoint/global_step*_hf; do
+            [ -d "${ckpt_dir}" ] || continue
+            step=$(basename "${ckpt_dir}" | sed -E 's/global_step([0-9]+)_hf/\1/')
+            if ! grep -qx "${step}" "${UPLOADED_MARKER}" 2>/dev/null; then
+                hf upload ${fine_tune_name} "${ckpt_dir}" --revision "step-${step}" \
+                    && echo "${step}" >> "${UPLOADED_MARKER}"
+            fi
+        done
+        sleep 5
+    done
+}
+watch_and_upload_checkpoints &
+WATCHER_PID=$!
+trap 'kill ${WATCHER_PID} 2>/dev/null' EXIT
+
 echo ${method}
 
-if [ "${method}" = "dpo" ]; then 
+if [ "${method}" = "dpo" ]; then
     echo "Running DPO"
     # Modified from LoX paper.
     deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
@@ -125,12 +143,22 @@ else
     exit 1
 fi
 
+kill ${WATCHER_PID} 2>/dev/null
+wait ${WATCHER_PID} 2>/dev/null
+trap - EXIT
+
+# Final sweep in case any checkpoint appeared after the watcher's last poll.
+for ckpt_dir in ./checkpoint/global_step*_hf; do
+    [ -d "${ckpt_dir}" ] || continue
+    step=$(basename "${ckpt_dir}" | sed -E 's/global_step([0-9]+)_hf/\1/')
+    if ! grep -qx "${step}" "${UPLOADED_MARKER}" 2>/dev/null; then
+        hf upload ${fine_tune_name} "${ckpt_dir}" --revision "step-${step}"
+    fi
+done
+rm -f "${UPLOADED_MARKER}"
+
 mkdir -p ~/lox-replication/model/${local_name}/
 hf upload ${fine_tune_name} ./model
-for ckpt_dir in ./checkpoint/global_step*_hf; do
-    step=$(basename "$ckpt_dir" | sed -E 's/global_step([0-9]+)_hf/\1/')
-    hf upload ${fine_tune_name} "$ckpt_dir" --revision "step-${step}"
-done
 
 if [ ${cluster} -eq 1 ]; then
     rsync -a ${local_dir}/model ~/lox-replication/model/${local_name}/
