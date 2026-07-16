@@ -57,6 +57,7 @@ else
     exit 1
 fi
 
+echo ${method}
 
 if [ "${method}" = "dpo" ]; then 
     echo "Running DPO"
@@ -119,6 +120,10 @@ elif [ "${method}" = "sft" ]; then # TO DO Investigate input/output key.
         --logger.logging_steps 1 \
         --logger.wandb.key ${WANDB_TOKEN} \
         ${GRAD_CKPT}
+else 
+    echo -e "Method not recognised. \n Execution stopped."
+    exit 1
+fi
 
 mkdir -p ~/lox-replication/model/${local_name}/
 hf upload ${fine_tune_name} ./model
