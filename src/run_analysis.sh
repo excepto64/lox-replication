@@ -10,6 +10,7 @@ config=${4}
 
 source ${config}
 
+fine_tune_name=${fine_tune_name}_s${seed}
 local_name=${fine_tune_name##*/}
 local_dir=${SCRATCH}/${local_name}
 
