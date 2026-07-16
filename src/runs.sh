@@ -6,10 +6,11 @@
 SCRATCH=~/lox-replication
 
 runs=("SmolLM2-360M_test.cfg")
-seeds=(2 0 26)
+#seeds=(2 0 26)
+seeds=(2)
 cluster=0
 
-./src/install.sh ${SCRATCH} ${cluster}
+#./src/install.sh ${SCRATCH} ${cluster}
 
 for run in "${runs[@]}"; do
     source ${run}
