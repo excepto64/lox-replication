@@ -58,8 +58,9 @@ else
 fi
 
 UPLOADED_MARKER=$(mktemp)
+STOP_FILE=$(mktemp -u)
 watch_and_upload_checkpoints() {
-    while true; do
+    while [ ! -f "${STOP_FILE}" ]; do
         for ckpt_dir in ./checkpoint/global_step*_hf; do
             [ -d "${ckpt_dir}" ] || continue
             step=$(basename "${ckpt_dir}" | sed -E 's/global_step([0-9]+)_hf/\1/')
@@ -73,7 +74,7 @@ watch_and_upload_checkpoints() {
 }
 watch_and_upload_checkpoints &
 WATCHER_PID=$!
-trap 'kill ${WATCHER_PID} 2>/dev/null' EXIT
+trap 'touch "${STOP_FILE}"; wait ${WATCHER_PID} 2>/dev/null' EXIT
 
 echo ${method}
 
@@ -143,9 +144,10 @@ else
     exit 1
 fi
 
-kill ${WATCHER_PID} 2>/dev/null
+touch "${STOP_FILE}"
 wait ${WATCHER_PID} 2>/dev/null
 trap - EXIT
+rm -f "${STOP_FILE}"
 
 # Final sweep in case any checkpoint appeared after the watcher's last poll.
 for ckpt_dir in ./checkpoint/global_step*_hf; do
