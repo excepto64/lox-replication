@@ -59,6 +59,7 @@ fi
 
 
 if [ "${method}" = "dpo" ]; then 
+    echo "Running DPO"
     # Modified from LoX paper.
     deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
         --model.model_name_or_path ${model_name} \
