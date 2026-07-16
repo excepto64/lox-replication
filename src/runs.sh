@@ -3,7 +3,8 @@
 
 # Run this from within the vm from within the lox-replication repo
 
-SCRATCH=~/diss/lox-replication
+# SCRATCH=~/diss/lox-replication
+SCRATCH=~/lox-replication
 
 runs=("SmolLM2-360M_test.cfg")
 #seeds=(2 0 26)
