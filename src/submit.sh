@@ -14,7 +14,7 @@ echo Script started.
 
 install_id=$(sbatch \
         --partition Teaching \
-        --nodelist=landonia03 \
+        --nodelist=landonia11 \
         --gres=gpu:1 \
         --time=1:00:00 \
         --cpus-per-task=1 \
@@ -27,7 +27,7 @@ for run in "${runs[@]}"; do
     for seed in "${seeds[@]}"; do
         sbatch \
                 --partition Teaching \
-                --nodelist=landonia03 \
+                --nodelist=landonia11 \
                 --gres=gpu:1 \
                 --cpus-per-task=1 \
                 --job-name=${seed}_${job_name} \
