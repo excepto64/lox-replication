@@ -89,7 +89,6 @@ if [ "${method}" = "dpo" ]; then
         --data.dataset ${dataset_name} \
         --data.chosen_key chosen \
         --data.rejected_key rejected \
-        --data.apply_chat_template \
         --data.max_len 1024 \
         --data.max_samples ${num_samples} \
         --train.batch_size ${batch_size} \
@@ -121,7 +120,6 @@ elif [ "${method}" = "sft" ]; then # TO DO Investigate input/output key.
         --data.dataset ${dataset_name} \
         --data.input_key input \
         --data.output_key output \
-        --data.apply_chat_template \
         --data.max_len 1024 \
         --data.max_samples ${num_samples} \
         --train.batch_size ${batch_size} \

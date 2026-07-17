@@ -15,7 +15,7 @@ echo Script started.
 install_id=$(sbatch \
         --partition Teaching \
         --nodelist=landonia03 \
-        --gres=gpu:1
+        --gres=gpu:1 \
         --time=1:00:00 \
         --cpus-per-task=1 \
         --job-name=Install \

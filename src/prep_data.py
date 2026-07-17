@@ -1,6 +1,4 @@
-from datasets import load_dataset, Features, Value
-
-message_list = [{'role': Value('string'), 'content': Value('string')}]
+from datasets import load_dataset
 
 ds = load_dataset("PKU-Alignment/PKU-SafeRLHF", "default", split='train')
 
@@ -20,18 +18,10 @@ ds = ds.filter(lambda x: x['is_response_0_safe'] or x["is_response_1_safe"])
 
 ds = ds.map(lambda x: {'safer_response': x['response_' + str(x['safer_response_id'])]})
 
-ds = ds.map(lambda x: {'chosen': [
-    {'role': 'user', 'content': x['prompt']},
-    {'role': 'assistant', 'content': x['safer_response']},
-]}, features=Features({**ds.features, 'chosen': message_list}))
-ds = ds.map(lambda x: {'rejected': [
-    {'role': 'user', 'content': x['prompt']},
-    {'role': 'assistant', 'content': x['response_' + str(1 - x['safer_response_id'])]},
-]}, features=Features({**ds.features, 'rejected': message_list}))
-ds = ds.map(lambda x: {'input': [{'role': 'user', 'content': x['prompt']}]},
-            features=Features({**ds.features, 'input': message_list}))
-ds = ds.map(lambda x: {'output': [{'role': 'assistant', 'content': x['safer_response']}]},
-            features=Features({**ds.features, 'output': message_list}))
+ds = ds.map(lambda x: {'chosen': 'User: ' + x['prompt'] + ' Assistant: ' + x['safer_response']})
+ds = ds.map(lambda x: {'rejected': 'User: ' + x['prompt'] + ' Assistant: ' + x['response_' + str(1 - x['safer_response_id'])]})
+ds = ds.map(lambda x: {'input': 'User: ' + x['prompt'] + ' Assistant: '})
+ds = ds.map(lambda x: {'output': x['safer_response']})
 
 dpo = ds.select_columns(['chosen', 'rejected'])
 sft = ds.select_columns(['input', 'output'])
