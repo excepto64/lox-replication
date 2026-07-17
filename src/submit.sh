@@ -15,6 +15,7 @@ echo Script started.
 install_id=$(sbatch \
         --partition Teaching \
         --nodelist=landonia03 \
+        --gres=gpu:1
         --time=1:00:00 \
         --cpus-per-task=1 \
         --job-name=Install \
@@ -26,7 +27,8 @@ for run in "${runs[@]}"; do
     for seed in "${seeds[@]}"; do
         sbatch \
                 --partition Teaching \
-                --nodelis=landonia03 \
+                --nodelist=landonia03 \
+                --gres=gpu:1 \
                 --cpus-per-task=1 \
                 --job-name=${seed}_${job_name} \
                 --dependency=afterok:${install_id} \
