@@ -14,7 +14,7 @@ fine_tune_name=${fine_tune_name}_s${seed}
 local_name=${fine_tune_name##*/}
 
 local_dir=${SCRATCH}/${local_name}
-dataset_name=Anthropic/hh-rlhf
+
 
 if [ ${cluster} -eq 1 ]; then
     MASTER_PORT=$((29500 + ${SLURM_JOB_ID} % 1000))
@@ -81,6 +81,7 @@ echo ${method}
 
 if [ "${method}" = "dpo" ]; then
     echo "Running DPO"
+    dataset_name=excepto64/PKU-SafeRLHF-filtered-dpo
     # Modified from LoX paper.
     deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
         --model.model_name_or_path ${model_name} \
@@ -88,6 +89,7 @@ if [ "${method}" = "dpo" ]; then
         --data.dataset ${dataset_name} \
         --data.chosen_key chosen \
         --data.rejected_key rejected \
+        --data.apply_chat_template \
         --data.max_len 1024 \
         --data.max_samples ${num_samples} \
         --train.batch_size ${batch_size} \
@@ -112,11 +114,14 @@ if [ "${method}" = "dpo" ]; then
         --logger.wandb.key ${WANDB_TOKEN} \
         ${GRAD_CKPT}
 elif [ "${method}" = "sft" ]; then # TO DO Investigate input/output key. 
+    echo "Running SFT"
+    dataset_name=excepto64/PKU-SafeRLHF-filtered-sft
     deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_sft  \
         --model.model_name_or_path ${model_name} \
         --data.dataset ${dataset_name} \
-        --data.input_key assistant \
-        --data.output_key response \
+        --data.input_key input \
+        --data.output_key output \
+        --data.apply_chat_template \
         --data.max_len 1024 \
         --data.max_samples ${num_samples} \
         --train.batch_size ${batch_size} \
