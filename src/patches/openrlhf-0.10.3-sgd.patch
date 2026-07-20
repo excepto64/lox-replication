@@ -121,3 +121,16 @@ diff -ruN a/utils/deepspeed/deepspeed.py b/utils/deepspeed/deepspeed.py
          else:
              optim_dict = {
                  "type": "AdamW",
+@@ -375,6 +392,12 @@
+
+         is_actor = isinstance(model, Actor)
+         ds_config = self.get_ds_train_config(optim_dict=optim_dict, max_norm=cfg.get("max_norm", 1.0))
++        if kind == "sgd":
++            # ZeRO's optimizer sanity check only whitelists Adam-family optimizers
++            # (its state partitioning/checkpointing assumes exp_avg/exp_avg_sq
++            # tensors); plain SGD has a different state shape (momentum_buffer)
++            # so it's flagged as "untested" even though ZeRO handles it fine.
++            ds_config["zero_allow_untested_optimizer"] = True
+
+         if self.ds_tensor_parallel_size > 1:
+             tp_model = deepspeed.tp_model_init(
