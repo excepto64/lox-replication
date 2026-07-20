@@ -49,17 +49,6 @@ else
     ZERO_STAGE=2
 fi
 
-if [ "${optimiser}" = "adam" ]; then
-    optim="adam"
-    lr="--adam.lr 5e-6"
-elif [ "${optimiser}" = "sgd" ]; then
-    optim="sgd"
-    lr="--sgd.lr 5e-6"
-else
-    echo -e "Optimiser not recognised. \n Execution stopped."
-    exit 1
-fi
-
 UPLOADED_MARKER=$(mktemp)
 STOP_FILE=$(mktemp -u)
 watch_and_upload_checkpoints() {
@@ -83,6 +72,17 @@ echo ${method}
 
 if [ "${method}" = "dpo" ]; then
     echo "Running DPO"
+    if [ "${optimiser}" = "adam" ]; then
+        optim="adam"
+        lr="--adam.lr 5e-6"
+    elif [ "${optimiser}" = "sgd" ]; then
+        optim="sgd"
+        lr="--sgd.lr 1e-2"
+    else
+        echo -e "Optimiser not recognised. \n Execution stopped."
+        exit 1
+    fi
+
     dataset_name=excepto64/PKU-SafeRLHF-filtered-dpo
     # Modified from LoX paper.
     deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
@@ -116,6 +116,17 @@ if [ "${method}" = "dpo" ]; then
         ${GRAD_CKPT}
 elif [ "${method}" = "sft" ]; then # TO DO Investigate input/output key. 
     echo "Running SFT"
+    if [ "${optimiser}" = "adam" ]; then
+        optim="adam"
+        lr="--adam.lr 5e-5"
+    elif [ "${optimiser}" = "sgd" ]; then
+        optim="sgd"
+        lr="--sgd.lr 1e-1"
+    else
+        echo -e "Optimiser not recognised. \n Execution stopped."
+        exit 1
+    fi
+
     dataset_name=excepto64/PKU-SafeRLHF-filtered-sft
     deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_sft  \
         --model.model_name_or_path ${model_name} \
