@@ -5,7 +5,7 @@
 
 SCRATCH=/disk/scratch/s2028118
 
-runs=("lox_SmolLM2-360M_hhrlhf_r0_1e_test_dpo_adam.cfg" "lox_SmolLM2-360M_hhrlhf_r0_1e_test_dpo_sgd.cfg" "lox_SmolLM2-360M_hhrlhf_r0_1e_test_sft_adam.cfg" 
+runs=("lox_SmolLM2-360M_hhrlhf_r0_1e_test_dpo_sgd.cfg" 
 "lox_SmolLM2-360M_hhrlhf_r0_1e_test_sft_sgd.cfg")
 seeds=(2 0 26)
 cluster=1
