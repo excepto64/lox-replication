@@ -41,7 +41,16 @@ echo "Dependencies installed!"
 # Add SGD optimizer support (--optim=sgd) to train_sft.py / train_dpo.py.
 # Patch is line/context-sensitive to openrlhf==0.10.3; if the pinned version
 # above changes, regenerate this patch against the new source.
+if [ ${cluster} -eq 1 ]; then
+    PATCH_FILE=~/lox-replication/src/patches/openrlhf-0.10.3-sgd.patch
+else
+    PATCH_FILE=src/patches/openrlhf-0.10.3-sgd.patch
+fi
 patch -p1 -d "$(python3 -c 'import openrlhf, os; print(os.path.dirname(openrlhf.__file__))')" \
-    < "src/patches/openrlhf-0.10.3-sgd.patch"
+    < "${PATCH_FILE}"
+if [ $? -ne 0 ]; then
+    echo "SGD optimizer patch FAILED to apply!" >&2
+    exit 1
+fi
 
 echo "SGD optimizer patch applied!"

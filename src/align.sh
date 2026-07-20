@@ -24,7 +24,9 @@ if [ ${cluster} -eq 1 ]; then
     source /home/htang2/toolchain-20251006/toolchain.rc
 
     mkdir -p ${local_dir}
-    rsync -a --exclude .env --exclude .venv ~/lox-replication/ ${local_dir}/
+    # Other concurrent jobs write into ~/lox-replication/model/*, so tolerate
+    # rsync's "some files vanished" warning (exit code 24) instead of aborting.
+    rsync -a --exclude .env --exclude .venv ~/lox-replication/ ${local_dir}/ || [ $? -eq 24 ]
     cd ${local_dir}
 
 elif [ ${cluster} -eq 0 ]; then
@@ -167,5 +169,5 @@ mkdir -p ~/lox-replication/model/${local_name}/
 hf upload ${fine_tune_name} ./model
 
 if [ ${cluster} -eq 1 ]; then
-    rsync -a ${local_dir}/model ~/lox-replication/model/${local_name}/
+    rsync -a ${local_dir}/model ~/lox-replication/model/${local_name}/ || [ $? -eq 24 ]
 fi
