@@ -7,9 +7,11 @@ parser.add_argument("--model", type=str, default="meta-llama/Llama-2-7b-chat-hf"
 parser.add_argument("--base-model", type=str, default="meta-llama/Llama-2-7b-hf")
 parser.add_argument("--n-main", type=int, default=2048) # Number of main singular values to consider for extrapolation.
 parser.add_argument("--n-sec", type=int, default=0) # Number of extra singular values to consider for extrapolation.
+parser.add_argument("--suffix", type=str, default="") # e.g. "dWX" to read SVD_coeffs_dWX_{model}.pt instead of SVD_coeffs_{model}.pt, and tag outputs accordingly.
 
 args = parser.parse_args()
 model_local = args.model.split('/')[-1]
+tag = f"_{args.suffix}" if args.suffix else ""
 
 def find_cum(coeff):
     total = torch.sum(coeff**2)
@@ -44,12 +46,12 @@ def plot_cum(svd_coeffs):
     plt.figure(0, figsize=(10, 6))
 
     cum_main = average_by_size(svd_coeffs, args.n_main, transform = find_cum)
-    torch.save(cum_main, f"cum_main_{model_local}.pt")
+    torch.save(cum_main, f"cum_main_{model_local}{tag}.pt")
     print(torch.where(cum_main > 0.8)[0][0], cum_main[10])
 
     if args.n_sec > 0:
         cum_sec = average_by_size(svd_coeffs, args.n_sec, transform = find_cum)
-        torch.save(cum_sec, f"cum_sec_{model_local}.pt")
+        torch.save(cum_sec, f"cum_sec_{model_local}{tag}.pt")
         print(torch.where(cum_sec > 0.8)[0][0], cum_sec[10])
         plt.plot(cum_sec.numpy(), label = "Secondary")
 
@@ -57,20 +59,20 @@ def plot_cum(svd_coeffs):
     plt.xlabel("Singular Values")
     plt.ylabel("Cumulative Proportion")
     plt.legend()
-    plt.savefig(f"cumulative_proportion_{model_local}.pdf")
+    plt.savefig(f"cumulative_proportion_{model_local}{tag}.pdf")
 
 def plot_lorenz(svd_coeffs):
     plt.figure(2, figsize=(10, 6))
 
     cum_main = average_by_size(svd_coeffs, args.n_main, transform = lorenz_curve)
     gini_main = gini_coefficient(cum_main)
-    torch.save(cum_main, f"lorenz_main_{model_local}.pt")
+    torch.save(cum_main, f"lorenz_main_{model_local}{tag}.pt")
     print(f"Gini (main): {gini_main}")
 
     if args.n_sec > 0:
         cum_sec = average_by_size(svd_coeffs, args.n_sec, transform = lorenz_curve)
         gini_sec = gini_coefficient(cum_sec)
-        torch.save(cum_sec, f"lorenz_sec_{model_local}.pt")
+        torch.save(cum_sec, f"lorenz_sec_{model_local}{tag}.pt")
         print(f"Gini (secondary): {gini_sec}")
         plt.plot(normalized_x(len(cum_sec)).numpy(), cum_sec.numpy(), label = f"Secondary (Gini = {gini_sec:.3f})")
 
@@ -79,17 +81,17 @@ def plot_lorenz(svd_coeffs):
     plt.xlabel("Cumulative Share of Singular Values")
     plt.ylabel("Cumulative Proportion")
     plt.legend()
-    plt.savefig(f"lorenz_curve_{model_local}.pdf")
+    plt.savefig(f"lorenz_curve_{model_local}{tag}.pdf")
 
 def plot_svd(svd_coeffs):
     plt.figure(1, figsize=(10, 6))
 
     sum_main = average_by_size(svd_coeffs, args.n_main)
-    torch.save(sum_main, f"sum_main_{model_local}.pt")
+    torch.save(sum_main, f"sum_main_{model_local}{tag}.pt")
 
     if args.n_sec > 0:
         sum_sec = average_by_size(svd_coeffs, args.n_sec)
-        torch.save(sum_sec, f"sum_sec_{model_local}.pt")
+        torch.save(sum_sec, f"sum_sec_{model_local}{tag}.pt")
         plt.plot(sum_sec.numpy(), label = "Secondary", color = "blue", linewidth = 2, marker = "o", markersize = 4)
 
     plt.plot(sum_main.numpy(), label = "Main", color = "orange", linewidth = 2, marker = "o", markersize = 4)
@@ -97,10 +99,10 @@ def plot_svd(svd_coeffs):
     plt.xlabel("Singular Values")
     plt.ylabel("Average Singular Value")
     plt.legend()
-    plt.savefig(f"average_singular_value_{model_local}.pdf")
+    plt.savefig(f"average_singular_value_{model_local}{tag}.pdf")
 
 def main():
-    svd_coeffs = torch.load(f"SVD_coeffs_{model_local}.pt", weights_only = True)
+    svd_coeffs = torch.load(f"SVD_coeffs_{model_local}{tag}.pt", weights_only = True)
     
     plot_cum(svd_coeffs)
 
