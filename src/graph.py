@@ -16,31 +16,39 @@ def find_cum(coeff):
     cum = torch.cumsum(coeff**2, dim = 0) / total
     return cum
 
+def lorenz_curve(coeff):
+    ascending = torch.flip(coeff, dims = [0])
+    total = torch.sum(ascending**2)
+    cum = torch.cumsum(ascending**2, dim = 0) / total
+    return cum
+
+def normalized_x(n):
+    return torch.linspace(0, 1, n)
+
+def gini_coefficient(lorenz_y, x = None):
+    if x is None:
+        x = normalized_x(len(lorenz_y))
+    area_under_curve = torch.trapz(lorenz_y, x)
+    return 1 - 2 * area_under_curve.item()
+
+def average_by_size(svd_coeffs, n, transform = None):
+    total = torch.zeros(n)
+    count = 0
+    for coeff in svd_coeffs:
+        if coeff.size()[0] == n:
+            count += 1
+            total += transform(coeff) if transform else coeff
+    return total / count
+
 def plot_cum(svd_coeffs):
-    n_main = 0
-    cum_main = torch.zeros(args.n_main)
-    
     plt.figure(0, figsize=(10, 6))
 
-    if args.n_sec > 0:
-        n_sec = 0
-        cum_sec = torch.zeros(args.n_sec)
-
-    for coeff in svd_coeffs:
-        cum = find_cum(coeff)
-        if coeff.size()[0] == args.n_main:
-            n_main += 1
-            cum_main += cum
-        elif coeff.size()[0] == args.n_sec and args.n_sec > 0:
-            n_sec += 1
-            cum_sec += cum
-
-    cum_main /= n_main
+    cum_main = average_by_size(svd_coeffs, args.n_main, transform = find_cum)
     torch.save(cum_main, f"cum_main_{model_local}.pt")
     print(torch.where(cum_main > 0.8)[0][0], cum_main[10])
 
     if args.n_sec > 0:
-        cum_sec /= n_sec
+        cum_sec = average_by_size(svd_coeffs, args.n_sec, transform = find_cum)
         torch.save(cum_sec, f"cum_sec_{model_local}.pt")
         print(torch.where(cum_sec > 0.8)[0][0], cum_sec[10])
         plt.plot(cum_sec.numpy(), label = "Secondary")
@@ -51,29 +59,36 @@ def plot_cum(svd_coeffs):
     plt.legend()
     plt.savefig(f"cumulative_proportion_{model_local}.pdf")
 
-def plot_svd(svd_coeffs):
-    n_main = 0
-    sum_main = torch.zeros(args.n_main)
+def plot_lorenz(svd_coeffs):
+    plt.figure(2, figsize=(10, 6))
 
-    plt.figure(1, figsize=(10, 6))
-    
+    cum_main = average_by_size(svd_coeffs, args.n_main, transform = lorenz_curve)
+    gini_main = gini_coefficient(cum_main)
+    torch.save(cum_main, f"lorenz_main_{model_local}.pt")
+    print(f"Gini (main): {gini_main}")
+
     if args.n_sec > 0:
-        n_sec = 0
-        sum_sec = torch.zeros(args.n_sec)
+        cum_sec = average_by_size(svd_coeffs, args.n_sec, transform = lorenz_curve)
+        gini_sec = gini_coefficient(cum_sec)
+        torch.save(cum_sec, f"lorenz_sec_{model_local}.pt")
+        print(f"Gini (secondary): {gini_sec}")
+        plt.plot(normalized_x(len(cum_sec)).numpy(), cum_sec.numpy(), label = f"Secondary (Gini = {gini_sec:.3f})")
 
-    for coeff in svd_coeffs:
-        if coeff.size()[0] == args.n_main:
-            n_main += 1
-            sum_main += coeff
-        elif coeff.size()[0] == args.n_sec and args.n_sec > 0:
-            n_sec += 1
-            sum_sec += coeff
+    plt.plot(normalized_x(len(cum_main)).numpy(), cum_main.numpy(), label = f"Main (Gini = {gini_main:.3f})")
+    plt.plot([0, 1], [0, 1], linestyle = "--", color = "gray", label = "Equality")
+    plt.xlabel("Cumulative Share of Singular Values")
+    plt.ylabel("Cumulative Proportion")
+    plt.legend()
+    plt.savefig(f"lorenz_curve_{model_local}.pdf")
 
-    sum_main /= n_main
+def plot_svd(svd_coeffs):
+    plt.figure(1, figsize=(10, 6))
+
+    sum_main = average_by_size(svd_coeffs, args.n_main)
     torch.save(sum_main, f"sum_main_{model_local}.pt")
 
     if args.n_sec > 0:
-        sum_sec /= n_sec
+        sum_sec = average_by_size(svd_coeffs, args.n_sec)
         torch.save(sum_sec, f"sum_sec_{model_local}.pt")
         plt.plot(sum_sec.numpy(), label = "Secondary", color = "blue", linewidth = 2, marker = "o", markersize = 4)
 
@@ -88,6 +103,8 @@ def main():
     svd_coeffs = torch.load(f"SVD_coeffs_{model_local}.pt", weights_only = True)
     
     plot_cum(svd_coeffs)
+
+    plot_lorenz(svd_coeffs)
 
     plot_svd(svd_coeffs)
 
