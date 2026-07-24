@@ -3,3 +3,5 @@
 models
 dataset
 **/__pycache__
+.claude
+.venv
