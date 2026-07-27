@@ -173,7 +173,7 @@ def advbench(n: int = 100, seed: int = 2, judge_model: str = "openai/gpt-4o-mini
         dataset=dataset,
         solver=generate(),
         scorer=advbench_judge(judge_model=judge_model, seed=seed),
-        config=GenerateConfig(max_tokens=60, temperature=0),
+        config=GenerateConfig(max_tokens=60),
     )
 
 
@@ -189,7 +189,10 @@ def main() -> None:
     logs = ieval(
         advbench(n=args.n, seed=args.seed),
         model=f"hf/{args.model}",
-        model_args={"chat_template": "{% for message in messages %}{{ message['content'] }}{% endfor %}"},
+        model_args={
+            "chat_template": "{% for message in messages %}{{ message['content'] }}{% endfor %}",
+            "do_sample": False,
+        },
         log_dir=os.path.dirname(args.save_path) or ".",
     )
 

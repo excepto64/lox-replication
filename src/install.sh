@@ -35,6 +35,8 @@ uv pip install openrlhf==0.10.3 --no-build-isolation
 uv pip install nvidia-ml-py==13.610.43
 uv pip uninstall pynvml # Version conflict.
 uv pip install matplotlib==3.10.9
+uv pip install inspect-ai==0.3.249
+uv pip install openai==2.48.0
 
 echo "Dependencies installed!"
 
