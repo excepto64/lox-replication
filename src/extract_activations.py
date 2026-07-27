@@ -266,7 +266,7 @@ def main():
         if any(r in name for r in REMOVE):
             continue
         if len(W_aligned[name].size()) > 1:
-            dW[name] = (W_aligned[name] - W_base[name]).cpu()
+            dW[name] = (W_aligned[name].cpu() - W_base[name])
     del W_base
 
     output = compute_dWX_svd(args, aligned_model, dW, tokenizer, device)
