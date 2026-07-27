@@ -56,7 +56,7 @@ print(args)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model_local = args.model.split("/")[-1]
 if args.out is None:
-    args.out = f"SVD_coeffs_dWX_{model_local}.pt"
+    args.out = f"SVD_coeffs_{model_local}_dWX.pt"
 
 REMOVE = ["model.embed_tokens.weight", "input_layernorm.weight", "post_attention_layernorm.weight", "model.norm.weight", "lm_head.weight"]
 
@@ -266,7 +266,7 @@ def main():
         if any(r in name for r in REMOVE):
             continue
         if len(W_aligned[name].size()) > 1:
-            dW[name] = (W_aligned[name].cpu() - W_base[name])
+            dW[name] = (W_aligned[name] - W_base[name]).cpu()
     del W_base
 
     output = compute_dWX_svd(args, aligned_model, dW, tokenizer, device)
