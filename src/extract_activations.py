@@ -36,9 +36,9 @@ import argparse
 import random
 from functools import reduce
 
-import torch
-import torch.nn as nn
 import pandas as pd
+import torch
+from torch import nn
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -122,7 +122,7 @@ class set_mask:
 
 
 def make_Act(model, verbose=False):
-    replace_map = dict()
+    replace_map = {}
     for name, module in model.named_modules():
         if isinstance(module, nn.Linear) and not any(r in f"{name}.weight" for r in REMOVE):
             replace_map[name] = ActLinear(module)
@@ -134,9 +134,8 @@ def make_Act(model, verbose=False):
             k_ = k.split(".")
             name_prefix, name_suffix = ".".join(k_[:-1]), k_[-1]
             if name_prefix == "":  # outer layer
-                if name == name_suffix:
-                    if verbose:
-                        print(" not modifying ", name_suffix)
+                if name == name_suffix and verbose:
+                    print(" not modifying ", name_suffix)
             elif name == name_prefix:
                 if verbose:
                     print("    modifying ", name_suffix, "inside", name)
@@ -207,7 +206,7 @@ def compute_dWX_svd(args, model, dW, tokenizer, device):
     output = []
 
     for layer in range(num_hidden_layers):
-        layer_filter_fn = lambda x: f"layers.{layer}." in x  # noqa: E731 (hack for llama series, matches upstream)
+        layer_filter_fn = lambda x: f"layers.{layer}." in x  # noqa: B023 E731 RUF100 (hack for llama series, matches upstream)
 
         # enable recording for the current layer.
         for name, module in model.named_modules():

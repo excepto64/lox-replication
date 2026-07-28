@@ -11,11 +11,12 @@ Usage (script, mirrors the original argparse interface):
 import argparse
 import os
 
-from inspect_ai import Task, eval as ieval, task
+from inspect_ai import Task, eval, task
 from inspect_ai.dataset import Sample, csv_dataset
 from inspect_ai.model import GenerateConfig, get_model
 from inspect_ai.scorer import Metric, Score, Scorer, Target, metric, scorer
 from inspect_ai.solver import TaskState, generate
+
 
 # Model gets fed this pre-formatted prompt verbatim (no chat template) via the
 # HF provider's passthrough `chat_template` model arg set on the CLI/task, so the
@@ -200,7 +201,7 @@ def main() -> None:
     args = parser.parse_args()
     print(args)
 
-    logs = ieval(
+    logs = eval(
         advbench(n=args.n, seed=args.seed),
         model=f"hf/{args.model}",
         model_args={

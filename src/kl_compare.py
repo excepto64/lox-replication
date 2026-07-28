@@ -1,11 +1,13 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from datasets import load_dataset
-import torch
-import torch.nn.functional as F
 import argparse
 import csv
 import os
+
+import torch
+import torch.nn.functional as F
+from datasets import load_dataset
 from tqdm import tqdm
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 
 def _hh_rlhf_examples():
     examples = []

@@ -2,11 +2,12 @@
 Modified from LoX paper.
 """
 
-from transformers import AutoModelForCausalLM
-from peft import PeftModel
-import torch
-from tqdm import tqdm 
 import argparse
+
+import torch
+from peft import PeftModel
+from tqdm import tqdm
+from transformers import AutoModelForCausalLM
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, default="meta-llama/Llama-2-7b-chat-hf")
@@ -19,7 +20,7 @@ args = parser.parse_args()
 print(args)
 
 def main():
-    k = args.k
+    k = args.k  # noqa: F841
 
     # Load the models
     #tokenizer = AutoTokenizer.from_pretrained(aligned_path)
@@ -52,7 +53,7 @@ def main():
     for name in tqdm(W_aligned):
         dW_aligned[name] = W_aligned[name] - W_base[name]
         if len(dW_aligned[name].size()) > 1:
-            U, S, Vt = torch.linalg.svd(dW_aligned[name].float(), full_matrices = False)
+            U, S, Vt = torch.linalg.svd(dW_aligned[name].float(), full_matrices = False)  # noqa: RUF059
             output.append(S)
         del W_base[name], dW_aligned[name]
     out_name = f"SVD_coeffs_{args.model.split('/')[-1]}.pt"

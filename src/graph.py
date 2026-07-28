@@ -1,6 +1,7 @@
-import torch
-import matplotlib.pyplot as plt
 import argparse
+
+import matplotlib.pyplot as plt
+import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, default="meta-llama/Llama-2-7b-chat-hf")
