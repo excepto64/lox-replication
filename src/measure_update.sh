@@ -27,11 +27,6 @@ num_checkpoints=$((num_samples / (batch_size * save_steps)))
 
 for i in $(seq 1 ${num_checkpoints}); do
     revision="step-$((i * save_steps))"
-    marker=".done_measure_update_${revision}"
-    if [ -f "${marker}" ]; then
-        echo "Skipping ${revision} (already done)."
-        continue
-    fi
 
     python src/LoX.py --base-model ${model_name} --model ${fine_tune_name} --lora ${lora} --revision ${revision}
     python src/graph.py --base-model ${model_name} --model ${fine_tune_name} --n-main ${main_dim} --n-sec ${sec_dim} --revision ${revision}

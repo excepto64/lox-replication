@@ -29,11 +29,6 @@ fi
 
 measure_one() {
     local revision=${1}
-    local marker=".done_measure_safety_${revision:-main}"
-    if [ -f "${marker}" ]; then
-        echo "Skipping ${revision:-main} (already done)."
-        return
-    fi
 
     local revision_flag=()
     local model_revision_flag=()
@@ -49,8 +44,6 @@ measure_one() {
     python src/extract_ranks.py --base-model ${model_name} --model ${fine_tune_name} --k 6 --base "${revision_flag[@]}"
 
     src/analyse_kl.sh ${SCRATCH} ${seed} ${cluster} ${config} "${revision}"
-
-    touch "${marker}"
 }
 
 if [ ${attacked} -eq 0 ]; then
