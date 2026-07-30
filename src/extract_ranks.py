@@ -11,6 +11,7 @@ parser.add_argument("--base-model", type=str, default="meta-llama/Llama-2-7b-hf"
 parser.add_argument("--k", type=int, default=0) # Top-ranks to extrapolate. k=0 extrapolates full rank.
 parser.add_argument("--coef", type=float, default=1.) # Extrapolation coefficient
 parser.add_argument("--base", action="store_true")
+parser.add_argument("--revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) of --model to load.")
 
 args = parser.parse_args()
 print(args)
@@ -20,8 +21,8 @@ def main():
     coef = args.coef
     aligned_path = args.model
 
-    tokenizer = AutoTokenizer.from_pretrained(aligned_path)
-    aligned_model = AutoModelForCausalLM.from_pretrained(aligned_path, dtype=torch.float32)
+    tokenizer = AutoTokenizer.from_pretrained(aligned_path, revision=args.revision)
+    aligned_model = AutoModelForCausalLM.from_pretrained(aligned_path, revision=args.revision, dtype=torch.float32)
     pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
 
     remove = ["model.embed_tokens.weight", "input_layernorm.weight", "post_attention_layernorm.weight", "model.norm.weight", "lm_head.weight"]
@@ -59,6 +60,8 @@ def main():
 
     save_path = args.save_path
     repo_id = aligned_path + f"_extracted_k{k}"
+    if args.revision:
+        repo_id += f"_{args.revision.replace('/', '-')}"
     aligned_model.save_pretrained(save_path, push_to_hub=True, repo_id=repo_id)
     tokenizer.save_pretrained(save_path)
 

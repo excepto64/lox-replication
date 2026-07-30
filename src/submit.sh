@@ -9,29 +9,46 @@ runs=("lox_SmolLM2-360M_hhrlhf_r0_1e_test_dpo_sgd.cfg"
 "lox_SmolLM2-360M_hhrlhf_r0_1e_test_sft_sgd.cfg")
 seeds=(2 0 26)
 cluster=1
+stage="A"
 
 echo Script started.
 
 install_id=$(sbatch \
-        --partition Teaching \
-        --nodelist=landonia11 \
-        --gres=gpu:1 \
-        --time=1:00:00 \
-        --cpus-per-task=1 \
-        --job-name=Install \
-        ./src/install.sh ${SCRATCH} ${cluster} | awk '{print $NF}')
+    --partition Teaching \
+    --nodelist=landonia11 \
+    --gres=gpu:1 \
+    --time=1:00:00 \
+    --cpus-per-task=1 \
+    --job-name=Install \
+    ./src/install.sh ${SCRATCH} ${cluster} | awk '{print $NF}')
 echo "Install job submitted: ${install_id}."
 
-for run in "${runs[@]}"; do
-    source ${run}
-    for seed in "${seeds[@]}"; do
-        sbatch \
+if [ "${stage}" = "A" ]; then
+    for run in "${runs[@]}"; do
+        source ${run}
+        for seed in "${seeds[@]}"; do
+            sbatch \
                 --partition Teaching \
                 --nodelist=landonia11 \
                 --gres=gpu:1 \
                 --cpus-per-task=1 \
                 --job-name=${seed}_${job_name} \
                 --dependency=afterok:${install_id} \
-                ./src/run.sh ${SCRATCH} ${seed} ${cluster} ${run}
+                ./src/run_stage_1.sh ${SCRATCH} ${seed} ${cluster} ${run}
         done
-done
+    done
+elif [ "${stage}" = "B" ]; then
+    for run in "${runs[@]}"; do
+        source ${run}
+        for seed in "${seeds[@]}"; do
+            sbatch \
+                --partition Teaching \
+                --nodelist=landonia11 \
+                --gres=gpu:1 \
+                --cpus-per-task=1 \
+                --job-name=${seed}_${job_name} \
+                --dependency=afterok:${install_id} \
+                ./src/run_stage_2.sh ${SCRATCH} ${seed} ${cluster} ${run}
+        done
+    done
+fi

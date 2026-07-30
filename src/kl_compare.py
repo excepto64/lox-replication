@@ -1,3 +1,19 @@
+"""Compare a base model and a target model (e.g. an aligned or rank-extracted
+variant) by mean KL divergence, per dataset.
+
+For datasets with a real prompt/response split (hh-rlhf, alpaca), KL is
+averaged over the response tokens only. For prompt-only datasets (wikipedia,
+overrefusal, overrefusal-toxic), KL falls back to the last token, since there
+is no response span to average over.
+
+Results are appended as rows to --out (default kl_out.csv):
+    base_model, model, dataset, mean_kl
+
+Example:
+    python src/kl_compare.py --base-model <base> --model <target> \\
+        --dataset hh-rlhf --limit 20 --batch-size 10
+"""
+
 import argparse
 import csv
 import os
@@ -54,13 +70,15 @@ parser.add_argument("--limit", type=int, default=None, help="Cap the number of p
 parser.add_argument("--batch-size", type=int, default=16, help="Prompts per forward-pass batch.")
 parser.add_argument("--max-length", type=int, default=512)
 parser.add_argument("--out", type=str, default="kl_out.csv")
+parser.add_argument("--revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) of --model to load.")
+parser.add_argument("--base-revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) of --base-model to load.")
 args = parser.parse_args()
 
 def main():
     # Load the models
-    tokenizer = AutoTokenizer.from_pretrained(args.base_model)
-    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
-    aligned_model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32)
+    tokenizer = AutoTokenizer.from_pretrained(args.base_model, revision=args.base_revision)
+    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, revision=args.base_revision, dtype=torch.float32)
+    aligned_model = AutoModelForCausalLM.from_pretrained(args.model, revision=args.revision, dtype=torch.float32)
 
     inputs = DATASETS[args.dataset]()
     if args.limit is not None:
@@ -80,8 +98,8 @@ def write_result(dataset_name, mean_kl):
     with open(args.out, "a", newline="") as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(["base_model", "model", "dataset", "mean_kl"])
-        writer.writerow([args.base_model, args.model, dataset_name, mean_kl])
+            writer.writerow(["base_model", "model", "revision", "dataset", "mean_kl"])
+        writer.writerow([args.base_model, args.model, args.revision or "", dataset_name, mean_kl])
 
 def compute_kl_divergence(tokenizer, pretrained_model, aligned_model, batch):
     tokenizer.pad_token = tokenizer.pad_token or tokenizer.eos_token

@@ -36,6 +36,7 @@ parser.add_argument("--scheduler", type=str, default="linear")
 parser.add_argument("--max-seq-length", type=int, default=1024)
 parser.add_argument("--save-steps", type=int, default=defaults["save_steps"])
 parser.add_argument("--save-total-limit", type=int, default=defaults["save_total_limit"])
+parser.add_argument("--fine-tune-name", type=str, default="", help="HF Hub repo id to push the final model to.")
 
 ALPACA_PROMPT_DICT = {
     "prompt_input": (lambda x:
@@ -105,10 +106,12 @@ def main():
         save_steps=args.save_steps,
         save_total_limit=args.save_total_limit,
         bf16=True,
-        push_to_hub=False,
         save_strategy="steps",
         dataset_text_field="text",
-        max_seq_length=args.max_seq_length
+        max_seq_length=args.max_seq_length,
+        push_to_hub=True,
+        hub_model_id=args.fine_tune_name,
+        hub_strategy="end",
     )
 
     trainer = SFTTrainer(

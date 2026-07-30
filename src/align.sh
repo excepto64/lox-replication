@@ -1,5 +1,5 @@
 #!/bin/bash
-# align_dpo.sh
+# align.sh
 
 set -e
 
@@ -15,12 +15,11 @@ local_name=${fine_tune_name##*/}
 
 local_dir=${SCRATCH}/${local_name}
 
-
+source ${SCRATCH}/.venv/bin/activate
 if [ ${cluster} -eq 1 ]; then
     MASTER_PORT=$((29500 + ${SLURM_JOB_ID} % 1000))
 
     source ~/lox-replication/.env
-    source ${SCRATCH}/.venv/bin/activate
     source /home/htang2/toolchain-20251006/toolchain.rc
 
     mkdir -p ${local_dir}
@@ -31,9 +30,7 @@ if [ ${cluster} -eq 1 ]; then
 
 elif [ ${cluster} -eq 0 ]; then
     MASTER_PORT=29500
-
     source ${SCRATCH}/.env
-    source ${SCRATCH}/.venv/bin/activate
 fi
 
 echo "In $(pwd)"    

@@ -49,12 +49,15 @@ parser.add_argument("--data-path", type=str, default="data/SFT_aligned_llama2-7b
 parser.add_argument("--seed", type=int, default=0, help="Seed for sampling the calibration data.")
 parser.add_argument("--nsamples", type=int, default=128, help="Number of calibration samples.")
 parser.add_argument("--out", type=str, default=None)
+parser.add_argument("--revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) of --model to load.")
 
 args = parser.parse_args()
 print(args)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model_local = args.model.split("/")[-1]
+if args.revision:
+    model_local += f"_{args.revision.replace('/', '-')}"
 if args.out is None:
     args.out = f"SVD_coeffs_{model_local}_dWX.pt"
 
@@ -252,8 +255,8 @@ def compute_dWX_svd(args, model, dW, tokenizer, device):
 
 
 def main():
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
-    aligned_model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32).to(device)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, revision=args.revision)
+    aligned_model = AutoModelForCausalLM.from_pretrained(args.model, revision=args.revision, dtype=torch.float32).to(device)
     base_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
 
     W_aligned = aligned_model.state_dict()

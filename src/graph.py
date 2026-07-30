@@ -9,9 +9,12 @@ parser.add_argument("--base-model", type=str, default="meta-llama/Llama-2-7b-hf"
 parser.add_argument("--n-main", type=int, default=2048) # Number of main singular values to consider for extrapolation.
 parser.add_argument("--n-sec", type=int, default=0) # Number of extra singular values to consider for extrapolation.
 parser.add_argument("--suffix", type=str, default="") # e.g. "dWX" to read SVD_coeffs_dWX_{model}.pt instead of SVD_coeffs_{model}.pt, and tag outputs accordingly.
+parser.add_argument("--revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) --model was loaded at; must match the tag used when writing SVD_coeffs_*.pt.")
 
 args = parser.parse_args()
 model_local = args.model.split('/')[-1]
+if args.revision:
+    model_local += f"_{args.revision.replace('/', '-')}"
 tag = f"_{args.suffix}" if args.suffix else ""
 
 def find_cum(coeff):
