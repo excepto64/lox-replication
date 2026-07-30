@@ -19,6 +19,8 @@ tag = f"_{args.suffix}" if args.suffix else ""
 
 def find_cum(coeff):
     total = torch.sum(coeff**2)
+    if total == 0:
+        return torch.ones_like(coeff)
     cum = torch.cumsum(coeff**2, dim = 0) / total
     return cum
 
@@ -51,12 +53,14 @@ def plot_cum(svd_coeffs):
 
     cum_main = average_by_size(svd_coeffs, args.n_main, transform = find_cum)
     torch.save(cum_main, f"cum_main_{model_local}{tag}.pt")
-    #print(torch.where(cum_main > 0.8)[0][0], cum_main[10])
+    idx = torch.where(cum_main > 0.8)[0]
+    print(idx[0] if len(idx) else "never crosses 0.8", cum_main[10])
 
     if args.n_sec > 0:
         cum_sec = average_by_size(svd_coeffs, args.n_sec, transform = find_cum)
         torch.save(cum_sec, f"cum_sec_{model_local}{tag}.pt")
-        #print(torch.where(cum_sec > 0.8)[0][0], cum_sec[10])
+        idx = torch.where(cum_sec > 0.8)[0]
+        print(idx[0] if len(idx) else "never crosses 0.8", cum_sec[10])
         plt.plot(cum_sec.numpy(), label = "Secondary")
 
     plt.plot(cum_main.numpy(), label = "Main")

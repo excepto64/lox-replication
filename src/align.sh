@@ -33,7 +33,8 @@ elif [ ${cluster} -eq 0 ]; then
     source ${SCRATCH}/.env
 fi
 
-echo "In $(pwd)"    
+echo "In $(pwd)"
+rm -rf ./checkpoint    
 hf auth login --token ${HF_TOKEN} --no-add-to-git-credential
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
