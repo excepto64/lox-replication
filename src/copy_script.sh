@@ -7,4 +7,4 @@ sbatch ./src/run.sh
 
 src/runs.sh 2>&1 | tee run.log
 
-rm -rf *.pdf *.pt model logs wandb checkpoint
+rm -rf *.pdf *.pt model logs wandb checkpoint .venv

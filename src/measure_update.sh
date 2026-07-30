@@ -33,8 +33,6 @@ for i in $(seq 1 ${num_checkpoints}); do
 
     python src/extract_activations.py --base-model ${model_name} --model ${fine_tune_name} --seed ${seed} --revision ${revision}
     python src/graph.py --base-model ${model_name} --model ${fine_tune_name} --n-main ${main_dim} --n-sec ${sec_dim} --suffix dWX --revision ${revision}
-
-    touch "${marker}"
 done
 
 if [ ${cluster} -eq 1 ]; then
