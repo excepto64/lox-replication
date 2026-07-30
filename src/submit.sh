@@ -34,7 +34,7 @@ if [ "${stage}" = "A" ]; then
                 --cpus-per-task=1 \
                 --job-name=${seed}_${job_name} \
                 --dependency=afterok:${install_id} \
-                ./src/run_stage_1.sh ${SCRATCH} ${seed} ${cluster} ${run}
+                ./src/run_stage_A.sh ${SCRATCH} ${seed} ${cluster} ${run}
         done
     done
 elif [ "${stage}" = "B" ]; then
@@ -48,7 +48,7 @@ elif [ "${stage}" = "B" ]; then
                 --cpus-per-task=1 \
                 --job-name=${seed}_${job_name} \
                 --dependency=afterok:${install_id} \
-                ./src/run_stage_2.sh ${SCRATCH} ${seed} ${cluster} ${run}
+                ./src/run_stage_B.sh ${SCRATCH} ${seed} ${cluster} ${run}
         done
     done
 fi

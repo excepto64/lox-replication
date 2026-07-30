@@ -35,4 +35,4 @@ fi
 python src/attack.py \
     --base-model ${fine_tune_name} \
     --dataset ${dataset} \
-    --fine_tune_name ${fine_tune}
+    --fine-tune-name ${attacked_name}
