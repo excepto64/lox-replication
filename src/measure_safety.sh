@@ -38,7 +38,7 @@ measure_one() {
     fi
 
     inspect eval src/ASR.py --model hf/${fine_tune_name} -T n=100 -T seed=2 \
-        -M chat_template="{% for message in messages %}{{ message['content'] }}{% endfor %}" \
+        -M chat_template="\"{% for message in messages %}{{ message['content'] }}{% endfor %}\"" \
         -M do_sample=false "${model_revision_flag[@]}"
 
     python src/extract_ranks.py --base-model ${model_name} --model ${fine_tune_name} --k 6 --base "${revision_flag[@]}"
