@@ -37,7 +37,7 @@ uv pip uninstall pynvml # Version conflict.
 uv pip install matplotlib==3.10.9
 uv pip install inspect-ai==0.3.249
 uv pip install openai==2.48.0
-uv pip isntall trl==1.9.2
+uv pip install trl==1.9.2
 
 echo "Dependencies installed!"
 
