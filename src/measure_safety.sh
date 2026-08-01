@@ -36,13 +36,15 @@ measure_one() {
         revision_flag=(--revision "${revision}")
         model_revision_flag=(-M "revision=${revision}")
     fi
-
+    echo Measuring ASR for revision ${revision}
     inspect eval src/ASR.py --model hf/${fine_tune_name} -T n=100 -T seed=2 \
         -M chat_template="\"{% for message in messages %}{{ message['content'] }}{% endfor %}\"" \
         -M do_sample=false "${model_revision_flag[@]}"
-
+    
+    echo Extracting ranks for revision ${revision}
     python src/extract_ranks.py --base-model ${model_name} --model ${fine_tune_name} --k 6 --base "${revision_flag[@]}"
 
+    echo Analysing kl for revision ${revision}
     src/analyse_kl.sh ${SCRATCH} ${seed} ${cluster} ${config} "${revision}"
 }
 

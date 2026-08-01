@@ -28,7 +28,7 @@ if [ -n "${revision}" ]; then
     base_rev_args=(--base-revision "${revision}")
 fi
 
-mkdir -p ${local_dirYes}
+mkdir -p ${local_dir}
 
 source ${SCRATCH}/.venv/bin/activate
 if [ ${cluster} -eq 1 ]; then
