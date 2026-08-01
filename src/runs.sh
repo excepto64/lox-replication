@@ -6,7 +6,7 @@
 # SCRATCH=~/diss/lox-replication
 SCRATCH=~/lox-replication
 
-runs=("lox_SmolLM2-360M_hhrlhf_r0_1e_test_dpo_adam.cfg")
+runs=("configs/lox_Llama-3_2-1B_r0_1e_dpo_adam.cfg")
 seeds=(2 0 26)
 # seeds=(2)
 cluster=0
