@@ -25,7 +25,7 @@ if [ ${cluster} -eq 1 ]; then
     mkdir -p ${local_dir}
     # Other concurrent jobs write into ~/lox-replication/model/*, so tolerate
     # rsync's "some files vanished" warning (exit code 24) instead of aborting.
-    rsync -a --exclude .env --exclude .venv ~/lox-replication/ ${local_dir}/ || [ $? -eq 24 ]
+    rsync -a ~/lox-replication/src ~/lox-replication/data ${local_dir}/ || [ $? -eq 24 ]
     cd ${local_dir}
 
 elif [ ${cluster} -eq 0 ]; then
