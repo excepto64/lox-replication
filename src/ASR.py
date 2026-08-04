@@ -9,6 +9,7 @@ Usage (script, mirrors the original argparse interface):
 """
 
 import argparse
+import csv
 import os
 
 from inspect_ai import Task, eval, task
@@ -192,17 +193,28 @@ def advbench(n: int = 100, seed: int = 2, judge_model: str = "openai/gpt-4o-mini
     )
 
 
+def write_result(out_path: str, model: str, n: int, seed: int, judge_model: str, asr_value: float, mean_score_value: float) -> None:
+    file_exists = os.path.exists(out_path)
+    with open(out_path, "a", newline="") as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(["model", "n", "seed", "judge_model", "asr", "mean_score"])
+        writer.writerow([model, n, seed, judge_model, asr_value, mean_score_value])
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=True)
     parser.add_argument("--save-path", type=str, default="./gens.csv")
     parser.add_argument("--n", type=int, default=100)
     parser.add_argument("--seed", type=int, default=2)
+    parser.add_argument("--judge-model", type=str, default="openai/gpt-4o-mini")
+    parser.add_argument("--out", type=str, default="asr_out.csv", help="CSV file to append the ASR/mean-score summary to.")
     args = parser.parse_args()
     print(args)
 
     logs = eval(
-        advbench(n=args.n, seed=args.seed),
+        advbench(n=args.n, seed=args.seed, judge_model=args.judge_model),
         model=f"hf/{args.model}",
         model_args={
             "chat_template": "{% for message in messages %}{{ message['content'] }}{% endfor %}",
@@ -215,6 +227,7 @@ def main() -> None:
     metrics = log.results.scores[0].metrics
     print(f"ASR: {metrics['asr'].value}")
     print(f"Score: {metrics['mean_score'].value}")
+    write_result(args.out, args.model, args.n, args.seed, args.judge_model, metrics['asr'].value, metrics['mean_score'].value)
 
 
 if __name__ == "__main__":
