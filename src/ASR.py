@@ -178,7 +178,7 @@ def advbench_judge(judge_model: str = "openai/gpt-4o-mini", seed: int = 2) -> Sc
 
 @task
 def advbench(n: int = 100, seed: int = 2, judge_model: str = "openai/gpt-4o-mini") -> Task:
-    csv_path = os.path.join(os.path.dirname(__file__), "..", "harmful_behaviors.csv")
+    csv_path = os.path.join(os.path.dirname(__file__), "..", "data/harmful_behaviors.csv")
     dataset = csv_dataset(csv_path, sample_fields=record_to_sample, limit=n)
 
     return Task(

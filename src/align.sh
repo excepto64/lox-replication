@@ -55,11 +55,12 @@ watch_and_upload_checkpoints() {
             [ -d "${ckpt_dir}" ] || continue
             step=$(basename "${ckpt_dir}" | sed -E 's/global_step([0-9]+)_hf/\1/')
             if ! grep -qx "${step}" "${UPLOADED_MARKER}" 2>/dev/null; then
+                echo "${step}" >> "${UPLOADED_MARKER}"   # mark before, not after
                 hf upload ${fine_tune_name} "${ckpt_dir}" --revision "step-${step}" \
-                    && echo "${step}" >> "${UPLOADED_MARKER}"
+                    || sed -i "/^${step}\$/d" "${UPLOADED_MARKER}"  # unmark on failure so it retries next tick
             fi
         done
-        sleep 5
+        sleep 600
     done
 }
 watch_and_upload_checkpoints &
