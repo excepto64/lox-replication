@@ -20,18 +20,20 @@ parser.add_argument("--revision", type=str, default=None, help="HF revision (e.g
 args = parser.parse_args()
 print(args)
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 def main():
     k = args.k  # noqa: F841
 
     # Load the models
     #tokenizer = AutoTokenizer.from_pretrained(aligned_path)
-    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
+    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32, device_map=device)
     if args.lora > 0:
-        aligned_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
+        aligned_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32, device_map=device)
         aligned_model = PeftModel.from_pretrained(aligned_model, args.model, revision=args.revision)
         aligned_model = aligned_model.merge_and_unload()
     else:
-        aligned_model = AutoModelForCausalLM.from_pretrained(args.model, revision=args.revision, dtype=torch.float32)
+        aligned_model = AutoModelForCausalLM.from_pretrained(args.model, revision=args.revision, dtype=torch.float32, device_map=device)
 
     remove = ["model.embed_tokens.weight", "input_layernorm.weight", "post_attention_layernorm.weight", "model.norm.weight", "lm_head.weight"]
 
@@ -55,7 +57,7 @@ def main():
         dW_aligned[name] = W_aligned[name] - W_base[name]
         if len(dW_aligned[name].size()) > 1:
             U, S, Vt = torch.linalg.svd(dW_aligned[name].float(), full_matrices = False)  # noqa: RUF059
-            output.append(S)
+            output.append(S.cpu())
         del W_base[name], dW_aligned[name]
     model_local = args.model.split('/')[-1]
     if args.revision:

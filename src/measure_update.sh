@@ -16,11 +16,12 @@ local_dir=${SCRATCH}/${local_name}
 
 source ${SCRATCH}/.venv/bin/activate
 if [ ${cluster} -eq 1 ]; then
-    source ~/lox-replication/.env
+    set -a; source ~/lox-replication/.env; set +a
     source /home/htang2/toolchain-20251006/toolchain.rc
     cd ${local_dir}
+    trap 'rsync -a ${local_dir}/ ~/lox-replication/${local_name} || [ $? -eq 24 ]' EXIT
 elif [ ${cluster} -eq 0 ]; then
-    source ${SCRATCH}/.env
+    set -a; source ${SCRATCH}/.env; set +a
 fi
 
 num_checkpoints=$((num_samples / (batch_size * save_steps)))
@@ -56,7 +57,3 @@ for step in "${steps[@]}"; do
 done
 
 python src/make_gifs.py --results-dir "$(pwd)" --run "${local_name}"
-
-if [ ${cluster} -eq 1 ]; then
-    rsync -a ${local_dir}/ ~/lox-replication/${local_name} || [ $? -eq 24 ]
-fi

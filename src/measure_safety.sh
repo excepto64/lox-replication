@@ -20,11 +20,12 @@ local_dir=${SCRATCH}/${local_name}
 
 source ${SCRATCH}/.venv/bin/activate
 if [ ${cluster} -eq 1 ]; then
-    source ~/lox-replication/.env
+    set -a; source ~/lox-replication/.env; set +a
     source /home/htang2/toolchain-20251006/toolchain.rc
     cd ${local_dir}
+    trap 'rsync -a ${local_dir}/ ~/lox-replication/${local_name} || [ $? -eq 24 ]' EXIT
 elif [ ${cluster} -eq 0 ]; then
-    source ${SCRATCH}/.env
+    set -a; source ${SCRATCH}/.env; set +a
 fi
 
 measure_one() {
@@ -55,8 +56,4 @@ if [ ${attacked} -eq 0 ]; then
     done
 else
     measure_one ""
-fi
-
-if [ ${cluster} -eq 1 ]; then
-    rsync -a ${local_dir}/ ~/lox-replication/${local_name} || [ $? -eq 24 ]
 fi

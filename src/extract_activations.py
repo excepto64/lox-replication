@@ -256,8 +256,8 @@ def compute_dWX_svd(args, model, dW, tokenizer, device):
 
 def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model, revision=args.revision)
-    aligned_model = AutoModelForCausalLM.from_pretrained(args.model, revision=args.revision, dtype=torch.float32).to(device)
-    base_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
+    aligned_model = AutoModelForCausalLM.from_pretrained(args.model, revision=args.revision, dtype=torch.float32, device_map=device)
+    base_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32, device_map=device)
 
     W_aligned = aligned_model.state_dict()
     W_base = base_model.state_dict()
@@ -268,7 +268,7 @@ def main():
         if any(r in name for r in REMOVE):
             continue
         if len(W_aligned[name].size()) > 1:
-            dW[name] = (W_aligned[name].cpu() - W_base[name])
+            dW[name] = (W_aligned[name] - W_base[name])
     del W_base
 
     output = compute_dWX_svd(args, aligned_model, dW, tokenizer, device)

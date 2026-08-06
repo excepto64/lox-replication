@@ -74,11 +74,13 @@ parser.add_argument("--revision", type=str, default=None, help="HF revision (e.g
 parser.add_argument("--base-revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) of --base-model to load.")
 args = parser.parse_args()
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 def main():
     # Load the models
     tokenizer = AutoTokenizer.from_pretrained(args.base_model, revision=args.base_revision)
-    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, revision=args.base_revision, dtype=torch.float32)
-    aligned_model = AutoModelForCausalLM.from_pretrained(args.model, revision=args.revision, dtype=torch.float32)
+    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, revision=args.base_revision, dtype=torch.float32, device_map=device)
+    aligned_model = AutoModelForCausalLM.from_pretrained(args.model, revision=args.revision, dtype=torch.float32, device_map=device)
 
     inputs = DATASETS[args.dataset]()
     if args.limit is not None:
@@ -108,6 +110,7 @@ def compute_kl_divergence(tokenizer, pretrained_model, aligned_model, batch):
         full_texts, return_tensors="pt", padding=True, truncation=True, max_length=args.max_length
     )
     seq_lens = inputs["attention_mask"].sum(dim=1)
+    inputs = {k: v.to(device) for k, v in inputs.items()}
 
     with torch.no_grad():
         logits_base = pretrained_model(**inputs).logits

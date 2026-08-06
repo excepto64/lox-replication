@@ -16,14 +16,16 @@ parser.add_argument("--revision", type=str, default=None, help="HF revision (e.g
 args = parser.parse_args()
 print(args)
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 def main():
     k = args.k
     coef = args.coef
     aligned_path = args.model
 
     tokenizer = AutoTokenizer.from_pretrained(aligned_path, revision=args.revision)
-    aligned_model = AutoModelForCausalLM.from_pretrained(aligned_path, revision=args.revision, dtype=torch.float32)
-    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32)
+    aligned_model = AutoModelForCausalLM.from_pretrained(aligned_path, revision=args.revision, dtype=torch.float32, device_map=device)
+    pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32, device_map=device)
 
     remove = ["model.embed_tokens.weight", "input_layernorm.weight", "post_attention_layernorm.weight", "model.norm.weight", "lm_head.weight"]
 

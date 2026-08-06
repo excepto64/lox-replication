@@ -19,7 +19,7 @@ source ${SCRATCH}/.venv/bin/activate
 if [ ${cluster} -eq 1 ]; then
     MASTER_PORT=$((29500 + ${SLURM_JOB_ID} % 1000))
 
-    source ~/lox-replication/.env
+    set -a; source ~/lox-replication/.env; set +a
     source /home/htang2/toolchain-20251006/toolchain.rc
 
     mkdir -p ${local_dir}
@@ -30,7 +30,7 @@ if [ ${cluster} -eq 1 ]; then
 
 elif [ ${cluster} -eq 0 ]; then
     MASTER_PORT=29500
-    source ${SCRATCH}/.env
+    set -a; source ${SCRATCH}/.env; set +a
 fi
 
 echo "In $(pwd)"
@@ -98,7 +98,6 @@ if [ "${method}" = "dpo" ]; then
         --train.seed ${seed} \
         --optim ${optim} \
         ${lr} \
-        --ds.packing_samples \
         --ds.zero_stage ${ZERO_STAGE} \
         --ds.param_dtype bf16 \
         --ds.attn_implementation flash_attention_2 \
@@ -140,7 +139,6 @@ elif [ "${method}" = "sft" ]; then # TO DO Investigate input/output key.
         --train.seed ${seed} \
         --optim ${optim} \
         ${lr} \
-        --ds.packing_samples \
         --ds.zero_stage ${ZERO_STAGE} \
         --ds.param_dtype bf16 \
         --ds.attn_implementation flash_attention_2 \

@@ -32,11 +32,11 @@ mkdir -p ${local_dir}
 
 source ${SCRATCH}/.venv/bin/activate
 if [ ${cluster} -eq 1 ]; then
-    source ~/lox-replication/.env
+    set -a; source ~/lox-replication/.env; set +a
     source /home/htang2/toolchain-20251006/toolchain.rc
     cd ${local_dir}
 elif [ ${cluster} -eq 0 ]; then
-    source ${SCRATCH}/.env
+    set -a; source ${SCRATCH}/.env; set +a
 fi
 
 datasets=("hh-rlhf" "alpaca" "wikipedia" "overrefusal" "overrefusal-toxic")

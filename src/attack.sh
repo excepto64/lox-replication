@@ -19,7 +19,7 @@ local_dir=${SCRATCH}/${local_name}
 
 source ${SCRATCH}/.venv/bin/activate
 if [ ${cluster} -eq 1 ]; then
-    source ~/lox-replication/.env
+    set -a; source ~/lox-replication/.env; set +a
     source /home/htang2/toolchain-20251006/toolchain.rc
 
     mkdir -p ${local_dir}
@@ -29,7 +29,7 @@ if [ ${cluster} -eq 1 ]; then
     cd ${local_dir}
 
 elif [ ${cluster} -eq 0 ]; then
-    source ${SCRATCH}/.env
+    set -a; source ${SCRATCH}/.env; set +a
 fi
 
 python src/attack.py \
