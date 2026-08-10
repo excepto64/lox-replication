@@ -7,11 +7,7 @@
 SCRATCH=~/lox-replication
 
 runs=( \
-    # "configs/lox_Llama-3_2-1B_r0_1e_dpo_adam.cfg" \
-    # "configs/lox_Llama-3_2-1B_r0_1e_dpo_sgd.cfg" \
-    "configs/lox_Llama-3_2-1B_r0_1e_sft_adam.cfg" \
-    "configs/lox_Llama-3_2-1B_r0_1e_sft_sgd.cfg" \
-    "configs/lox_Llama-3_2-3B_r0_1e_sft_sgd.cfg" \
+    "configs/lox_Llama-3_2-1B_r0_1e_dpo_adam.cfg" \
 )
 seeds=(2 0 26)
 # seeds=(2)
