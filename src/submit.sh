@@ -29,9 +29,9 @@ install_id=$(sbatch \
 echo "Install job submitted: ${install_id}."
 
 if [ "${stage}" = "A" ]; then
-    for run in "${runs[@]}"; do
-        source ${run}
-        for seed in "${seeds[@]}"; do
+    for seed in "${seeds[@]}"; do
+        for run in "${runs[@]}"; do
+            source ${run}
             sbatch \
                 --partition Teaching \
                 --nodelist=landonia11 \
@@ -43,9 +43,9 @@ if [ "${stage}" = "A" ]; then
         done
     done
 elif [ "${stage}" = "B" ]; then
-    for run in "${runs[@]}"; do
-        source ${run}
-        for seed in "${seeds[@]}"; do
+    for seed in "${seeds[@]}"; do
+        for run in "${runs[@]}"; do
+            source ${run}
             sbatch \
                 --partition Teaching \
                 --nodelist=landonia11 \
