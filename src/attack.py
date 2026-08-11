@@ -110,7 +110,7 @@ def main():
         bf16=True,
         save_strategy="steps",
         dataset_text_field="text",
-        max_seq_length=args.max_seq_length,
+        max_length=args.max_seq_length,
         push_to_hub=True,
         hub_model_id=args.fine_tune_name,
         hub_strategy="end",
