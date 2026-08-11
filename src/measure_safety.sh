@@ -51,7 +51,7 @@ measure_one() {
 
 if [ ${attacked} -eq 0 ]; then
     num_checkpoints=$((num_samples / (batch_size * save_steps)))
-    for i in $(seq 1 ${num_checkpoints}); do
+    for i in $(seq 6 ${num_checkpoints}); do
         measure_one "step-$((i * save_steps))"
     done
 else
