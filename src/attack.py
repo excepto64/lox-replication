@@ -25,6 +25,7 @@ defaults = DATASET_DEFAULTS[dataset_args.dataset]
 
 parser = argparse.ArgumentParser(parents=[base_parser])
 parser.add_argument("--base-model", type=str, default="")
+parser.add_argument("--revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) of --base-model to load.")
 parser.add_argument("--epochs", type=int, default=defaults["epochs"])
 parser.add_argument("--batch-size", type=int, default=defaults["batch_size"])
 parser.add_argument("--acc-steps", type=int, default=defaults["acc_steps"])
@@ -73,13 +74,14 @@ def main():
     args = parser.parse_args()
     train_dataset = DATASETS[args.dataset]()
 
-    tokenizer = AutoTokenizer.from_pretrained(args.base_model, use_fast=False)
+    tokenizer = AutoTokenizer.from_pretrained(args.base_model, revision=args.revision, use_fast=False)
     tokenizer.pad_token = tokenizer.unk_token
     tokenizer.padding_side = 'right'  # to prevent errors with FA
     tokenizer.truncation_side = 'left'  # to prevent cutting off last generation
 
     model = AutoModelForCausalLM.from_pretrained(
         args.base_model,
+        revision=args.revision,
         device_map="auto",
         use_cache=False,
         torch_dtype=torch.bfloat16
