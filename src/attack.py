@@ -114,6 +114,7 @@ def main():
         push_to_hub=True,
         hub_model_id=args.fine_tune_name,
         hub_strategy="end",
+        max_steps=1000,
     )
 
     trainer = SFTTrainer(
