@@ -14,7 +14,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 # templating and a handful of hyperparameter defaults tuned per-dataset;
 # everything else (model loading, SFTConfig, trainer) was identical.
 DATASET_DEFAULTS = {
-    "alpaca": {"epochs": 1, "batch_size": 8, "acc_steps": 8, "lr": 2e-5, "save_steps": 15000, "save_total_limit": 2},
+    "alpaca": {"epochs": 1, "batch_size": 64, "acc_steps": 1, "lr": 2e-5, "save_steps": 15000, "save_total_limit": 2},
     "gsm8k": {"epochs": 2, "batch_size": 20, "acc_steps": 2, "lr": 5e-5, "save_steps": 5000, "save_total_limit": 8},
 }
 
@@ -99,7 +99,7 @@ def main():
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
         gradient_accumulation_steps=args.acc_steps,
-        gradient_checkpointing=True,
+        gradient_checkpointing=False,
         learning_rate=args.lr,
         max_grad_norm=args.max_grad_norm,
         warmup_steps=args.warmup_steps,
@@ -114,7 +114,7 @@ def main():
         push_to_hub=True,
         hub_model_id=args.fine_tune_name,
         hub_strategy="end",
-        max_steps=1000,
+        max_steps=100,
     )
 
     trainer = SFTTrainer(
