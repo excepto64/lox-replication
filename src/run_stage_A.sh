@@ -13,10 +13,10 @@ echo $(date)
 # ./src/align.sh ${SCRATCH} ${seed} ${cluster} ${config}
 # echo "Model fine-tune complete."
 
-# Measure the safety update and calculate gini of the update.
-echo "Initiate update measurement."
-./src/measure_update.sh ${SCRATCH} ${seed} ${cluster} ${config} 1
-echo "Update measurement complete."
+# # Measure the safety update and calculate gini of the update.
+# echo "Initiate update measurement."
+# ./src/measure_update.sh ${SCRATCH} ${seed} ${cluster} ${config} 1
+# echo "Update measurement complete."
 
 # Measure the safety of the model pre-attack
 echo "Initiate safety measurement."
