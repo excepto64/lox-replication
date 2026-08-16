@@ -210,16 +210,24 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=2)
     parser.add_argument("--judge-model", type=str, default="openai/gpt-4o-mini")
     parser.add_argument("--out", type=str, default="asr_out.csv", help="CSV file to append the ASR/mean-score summary to.")
+    parser.add_argument("--revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) of --model to load; also recorded as a `revision:<rev>` tag on the eval log.")
     args = parser.parse_args()
     print(args)
+
+    model_args = {
+        "chat_template": "{% for message in messages %}{{ message['content'] }}{% endfor %}",
+        "do_sample": False,
+    }
+    tags = None
+    if args.revision:
+        model_args["revision"] = args.revision
+        tags = [f"revision:{args.revision}"]
 
     logs = eval(
         advbench(n=args.n, seed=args.seed, judge_model=args.judge_model),
         model=f"hf/{args.model}",
-        model_args={
-            "chat_template": "{% for message in messages %}{{ message['content'] }}{% endfor %}",
-            "do_sample": False,
-        },
+        model_args=model_args,
+        tags=tags,
         log_dir=os.path.dirname(args.save_path) or ".",
     )
 

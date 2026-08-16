@@ -32,7 +32,13 @@ elif [ ${cluster} -eq 0 ]; then
     set -a; source ${SCRATCH}/.env; set +a
 fi
 
+revision_flag=()
+if [ -n "${revision}" ]; then
+    revision_flag=(--revision "${revision}")
+fi
+
 python src/attack.py \
     --base-model ${fine_tune_name} \
     --dataset ${dataset} \
-    --fine-tune-name ${attacked_name}
+    --fine-tune-name ${attacked_name} \
+    "${revision_flag[@]}"

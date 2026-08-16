@@ -22,8 +22,12 @@ source ${SCRATCH}/.venv/bin/activate
 if [ ${cluster} -eq 1 ]; then
     set -a; source ~/lox-replication/.env; set +a
     source /home/htang2/toolchain-20251006/toolchain.rc
-    cd ${local_dir}
-    trap 'rsync -a ${local_dir}/ ~/lox-replication/${local_name} || [ $? -eq 24 ]' EXIT
+    if [ ${attacked} -eq 0 ]; then
+        cd ${local_dir}
+        trap 'rsync -a ${local_dir}/ ~/lox-replication/${local_name} || [ $? -eq 24 ]' EXIT
+    else
+        trap 'rsync -a ./ ~/lox-replication/${local_name} || [ $? -eq 24 ]' EXIT
+    fi
 elif [ ${cluster} -eq 0 ]; then
     set -a; source ${SCRATCH}/.env; set +a
 fi
@@ -33,14 +37,16 @@ measure_one() {
 
     local revision_flag=()
     local model_revision_flag=()
+    local tags_flag=()
     if [ -n "${revision}" ]; then
         revision_flag=(--revision "${revision}")
         model_revision_flag=(-M "revision=${revision}")
+        tags_flag=(--tags "revision:${revision}")
     fi
     echo Measuring ASR for revision ${revision}
     inspect eval src/ASR.py --model hf/${fine_tune_name} -T n=100 -T seed=2 \
         -M chat_template="\"{% for message in messages %}{{ message['content'] }}{% endfor %}\"" \
-        -M do_sample=false "${model_revision_flag[@]}"
+        -M do_sample=false "${model_revision_flag[@]}" "${tags_flag[@]}"
     
     # echo Extracting ranks for revision ${revision}
     # python src/extract_ranks.py --base-model ${model_name} --model ${fine_tune_name} --k 6 --base "${revision_flag[@]}"

@@ -16,9 +16,9 @@ runs=( \
 # seeds=(2 0 26)
 seeds=(2)
 cluster=0
-stage="A"
+stage="B"
 
-#./src/install.sh ${SCRATCH} ${cluster}
+# ./src/install.sh ${SCRATCH} ${cluster}
 
 if [ "${stage}" = "A" ]; then
     for run in "${runs[@]}"; do
