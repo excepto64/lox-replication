@@ -22,8 +22,12 @@ source ${SCRATCH}/.venv/bin/activate
 if [ ${cluster} -eq 1 ]; then
     set -a; source ~/lox-replication/.env; set +a
     source /home/htang2/toolchain-20251006/toolchain.rc
-    cd ${local_dir}
-    trap 'rsync -a ${local_dir}/ ~/lox-replication/${local_name} || [ $? -eq 24 ]' EXIT
+    if [ ${attacked} -eq 0 ]; then
+        cd ${local_dir}
+        trap 'rsync -a ${local_dir}/ ~/lox-replication/${local_name} || [ $? -eq 24 ]' EXIT
+    else
+        trap 'rsync -a ./ ~/lox-replication/${local_name} || [ $? -eq 24 ]' EXIT
+    fi
 elif [ ${cluster} -eq 0 ]; then
     set -a; source ${SCRATCH}/.env; set +a
 fi
