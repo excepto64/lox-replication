@@ -9,9 +9,9 @@ config=${4}
 echo $(date)
 
 # Attack model
-echo "Initiate attack."
-src/attack.sh ${SCRATCH} ${seed} ${cluster} ${config}
-echo "Attack completed."
+# echo "Initiate attack."
+# src/attack.sh ${SCRATCH} ${seed} ${cluster} ${config}
+# echo "Attack completed."
 
 # Measure safety of the model post-attack
 echo "Initiate safety measurement."
