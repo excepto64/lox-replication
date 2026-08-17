@@ -43,8 +43,8 @@ if [ -z "${svd_ylim_max}" ]; then
     svd_ylim_max=$(python src/find_svd_ylim.py --fine-tune-name "${local_name}" --steps "${steps[@]}" --shapes ${shapes})
 fi
 if [ -z "${svd_ylim_max_dwx}" ]; then
-#     svd_ylim_max_dwx=$(python src/find_svd_ylim.py --fine-tune-name "${local_name}" --steps "${steps[@]}" --suffix dWX --shapes ${shapes})
-# fi
+    svd_ylim_max_dwx=$(python src/find_svd_ylim.py --fine-tune-name "${local_name}" --steps "${steps[@]}" --suffix dWX --shapes ${shapes})
+fi
 
 svd_ylim_args=(--svd-ylim-max "${svd_ylim_max}")
 svd_ylim_args_dwx=(--svd-ylim-max "${svd_ylim_max_dwx}")
