@@ -57,7 +57,8 @@ def main():
         dW_aligned[name] = W_aligned[name] - W_base[name]
         if len(dW_aligned[name].size()) > 1:
             U, S, Vt = torch.linalg.svd(dW_aligned[name].float(), full_matrices = False)  # noqa: RUF059
-            output.append(S.cpu())
+            shape = tuple(sorted(dW_aligned[name].size()))
+            output.append({"shape": shape, "S": S.cpu()})
         del W_base[name], dW_aligned[name]
     model_local = args.model.split('/')[-1]
     if args.revision:
