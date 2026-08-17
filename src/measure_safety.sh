@@ -48,11 +48,11 @@ measure_one() {
         -M chat_template="\"{% for message in messages %}{{ message['content'] }}{% endfor %}\"" \
         -M do_sample=false "${model_revision_flag[@]}" "${tags_flag[@]}"
     
-    # echo Extracting ranks for revision ${revision}
-    # python src/extract_ranks.py --base-model ${model_name} --model ${fine_tune_name} --k 6 --base "${revision_flag[@]}"
+    echo Extracting ranks for revision ${revision}
+    python src/extract_ranks.py --base-model ${model_name} --model ${fine_tune_name} --k 6 --base "${revision_flag[@]}"
 
-    # echo Analysing kl for revision ${revision}
-    # src/analyse_kl.sh ${SCRATCH} ${seed} ${cluster} ${config} "${revision}"
+    echo Analysing kl for revision ${revision}
+    src/analyse_kl.sh ${SCRATCH} ${seed} ${cluster} ${config} "${revision}"
 }
 
 if [ ${attacked} -eq 0 ]; then
