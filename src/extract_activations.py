@@ -27,9 +27,9 @@ instructions + Llama2-7b-chat's own refusals), loaded exactly like their
 under analysis -- this keeps the calibration distribution fixed across
 every checkpoint being compared.
 
-Output format matches extract_ranks.py's SVD_coeffs_{model}.pt (a list of 1D
-singular-value tensors, one per 2D weight matrix) so it can be consumed by
-graph.py unchanged.
+Output format matches LoX.py's SVD_coeffs_{model}.pt (a list of dicts, each
+{"shape": sorted dW weight-matrix shape, "S": 1D singular-value tensor}, one
+per 2D weight matrix) so it can be consumed by graph.py unchanged.
 """
 
 import argparse
@@ -237,7 +237,8 @@ def compute_dWX_svd(args, model, dW, tokenizer, device):
                 dW_mat = dW[weight_name].to(device)  # d_out * d_in
                 score = module.activation_norms.float() @ dW_mat.float().T  # (size, d_out)
                 _, S, _ = torch.linalg.svd(score, full_matrices=False)
-                output.append(S.cpu())
+                shape = tuple(sorted(dW_mat.size()))
+                output.append({"shape": shape, "S": S.cpu()})
                 del score
 
         # disable recording for the current layer.

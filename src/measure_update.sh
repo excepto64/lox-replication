@@ -40,11 +40,11 @@ done
 # Phase 2: fix the average-singular-value plot's y-axis across all steps.
 # Config vars svd_ylim_max / svd_ylim_max_dwx override the auto-computed max if set.
 if [ -z "${svd_ylim_max}" ]; then
-    svd_ylim_max=$(python src/find_svd_ylim.py --fine-tune-name "${local_name}" --steps "${steps[@]}" --n-main ${main_dim} --n-sec ${sec_dim})
+    svd_ylim_max=$(python src/find_svd_ylim.py --fine-tune-name "${local_name}" --steps "${steps[@]}" --shapes ${shapes})
 fi
 if [ -z "${svd_ylim_max_dwx}" ]; then
-    svd_ylim_max_dwx=$(python src/find_svd_ylim.py --fine-tune-name "${local_name}" --steps "${steps[@]}" --suffix dWX --n-main ${main_dim} --n-sec ${sec_dim})
-fi
+#     svd_ylim_max_dwx=$(python src/find_svd_ylim.py --fine-tune-name "${local_name}" --steps "${steps[@]}" --suffix dWX --shapes ${shapes})
+# fi
 
 svd_ylim_args=(--svd-ylim-max "${svd_ylim_max}")
 svd_ylim_args_dwx=(--svd-ylim-max "${svd_ylim_max_dwx}")
@@ -52,8 +52,8 @@ svd_ylim_args_dwx=(--svd-ylim-max "${svd_ylim_max_dwx}")
 # Phase 3: plot every step with the fixed scale.
 for step in "${steps[@]}"; do
     revision="step-${step}"
-    python src/graph.py --base-model ${model_name} --model ${fine_tune_name} --n-main ${main_dim} --n-sec ${sec_dim} --revision ${revision} "${svd_ylim_args[@]}"
-    python src/graph.py --base-model ${model_name} --model ${fine_tune_name} --n-main ${main_dim} --n-sec ${sec_dim} --suffix dWX --revision ${revision} "${svd_ylim_args_dwx[@]}"
+    python src/graph.py --base-model ${model_name} --model ${fine_tune_name} --shapes ${shapes} --revision ${revision} "${svd_ylim_args[@]}"
+    python src/graph.py --base-model ${model_name} --model ${fine_tune_name} --shapes ${shapes} --suffix dWX --revision ${revision} "${svd_ylim_args_dwx[@]}"
 done
 
 python src/make_gifs.py --results-dir "$(pwd)" --run "${local_name}"
