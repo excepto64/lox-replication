@@ -17,6 +17,11 @@ seed, averages them elementwise per shape, re-derives Gini/crossing_idx/
 cum_at_10 from the averaged curves, cross-checks Gini and cum_at_10 against
 the mean of the per-seed values in --graph-csv (should match to numerical
 precision), and re-plots the averaged curves.
+
+Pass --steps to loop over a whole run's checkpoints automatically (revision
+is built as step-{N} for each N), matching measure_update.sh's step
+numbering; pass --revision for a single checkpoint (or omit both for
+un-revisioned models).
 """
 
 import argparse
@@ -34,7 +39,9 @@ parser.add_argument(
     help='Weight-matrix shapes to average, e.g. --shapes "2048,2048" "512,2048" "2048,8192".',
 )
 parser.add_argument("--suffix", type=str, default="", help="e.g. dWX to average the dWX-tagged curves instead of the weight-SVD curves.")
-parser.add_argument("--revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) used when the per-seed curves were written.")
+revision_group = parser.add_mutually_exclusive_group()
+revision_group.add_argument("--revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) used when the per-seed curves were written, for a single checkpoint.")
+revision_group.add_argument("--steps", type=int, nargs="+", default=[30, 60, 90, 120, 150, 180, 210, 240], help="Checkpoint step numbers to average automatically. Revision for step N is read as step-N, matching measure_update.sh. Default: 30 60 ... 240.")
 parser.add_argument("--graph-csv", type=str, default="graph_out.csv", help="CSV written by graph.py, used to cross-check the recomputed Gini/cum_at_10 against the mean of the per-seed values.")
 parser.add_argument("--out", type=str, default="graph_out_seed_avg.csv", help="CSV file to append the seed-averaged summary numbers to.")
 
@@ -46,16 +53,23 @@ def parse_shape(s):
 shapes = [parse_shape(s) for s in args.shapes]
 tag = f"_{args.suffix}" if args.suffix else ""
 
-def model_local_for_seed(seed):
+if args.revision:
+    revisions = [args.revision]
+else:
+    revisions = [f"step-{s}" for s in args.steps]
+
+def model_local_for_seed(seed, revision):
     base = args.model.split("/")[-1]
     local = f"{base}_s{seed}"
-    if args.revision:
-        local += f"_{args.revision.replace('/', '-')}"
+    if revision:
+        local += f"_{revision.replace('/', '-')}"
     return local
 
-avg_model_local = f"{args.model.split('/')[-1]}_savg-{'-'.join(str(s) for s in args.seeds)}"
-if args.revision:
-    avg_model_local += f"_{args.revision.replace('/', '-')}"
+def avg_model_local_for(revision):
+    local = f"{args.model.split('/')[-1]}_savg-{'-'.join(str(s) for s in args.seeds)}"
+    if revision:
+        local += f"_{revision.replace('/', '-')}"
+    return local
 
 def shape_tag(shape):
     return "x".join(str(d) for d in shape)
@@ -69,15 +83,15 @@ def gini_coefficient(lorenz_y, x = None):
     area_under_curve = torch.trapz(lorenz_y, x)
     return 1 - 2 * area_under_curve.item()
 
-def write_result(row):
+def write_result(revision, row):
     file_exists = os.path.exists(args.out)
     with open(args.out, "a", newline="") as f:
         writer = csv.writer(f)
         if not file_exists:
             writer.writerow(["model", "revision", "suffix", "seeds", "series", "metric", "value"])
-        writer.writerow([args.model, args.revision or "", args.suffix, "-".join(str(s) for s in args.seeds), *row])
+        writer.writerow([args.model, revision or "", args.suffix, "-".join(str(s) for s in args.seeds), *row])
 
-def load_csv_values(model_local, label, metric):
+def load_csv_values(model_local, revision, label, metric):
     if not os.path.exists(args.graph_csv):
         return None
     values = []
@@ -85,7 +99,7 @@ def load_csv_values(model_local, label, metric):
         for row in csv.DictReader(f):
             if (
                 row["model"].split("/")[-1] == model_local
-                and row["revision"] == (args.revision or "")
+                and row["revision"] == (revision or "")
                 and row["suffix"] == args.suffix
                 and row["series"] == label
                 and row["metric"] == metric
@@ -96,22 +110,24 @@ def load_csv_values(model_local, label, metric):
                     pass
     return values
 
-def average_curves(prefix):
+def average_curves(prefix, revision):
     """Load {prefix}_{shape}_{model_local}{tag}.pt for every seed and shape, average elementwise."""
     averaged = {}
     for shape in shapes:
         label = shape_tag(shape)
         curves = []
         for seed in args.seeds:
-            path = f"{prefix}_{label}_{model_local_for_seed(seed)}{tag}.pt"
+            path = f"{prefix}_{label}_{model_local_for_seed(seed, revision)}{tag}.pt"
             curves.append(torch.load(path, weights_only=True))
         averaged[shape] = torch.stack(curves).mean(dim=0)
     return averaged
 
-def main():
-    avg_cum = average_curves("cum")
-    avg_lorenz = average_curves("lorenz")
-    avg_sum = average_curves("sum")
+def run_for_revision(revision):
+    avg_model_local = avg_model_local_for(revision)
+
+    avg_cum = average_curves("cum", revision)
+    avg_lorenz = average_curves("lorenz", revision)
+    avg_sum = average_curves("sum", revision)
 
     plt.figure(0, figsize=(10, 6))
     for shape in shapes:
@@ -121,16 +137,16 @@ def main():
         idx = torch.where(cum > 0.8)[0]
         crossing_idx = idx[0].item() if len(idx) else "never crosses 0.8"
         cum_at_10 = cum[10].item()
-        write_result([label, "crossing_idx_0.8", crossing_idx])
-        write_result([label, "cum_at_10", cum_at_10])
+        write_result(revision, [label, "crossing_idx_0.8", crossing_idx])
+        write_result(revision, [label, "cum_at_10", cum_at_10])
         # cross-check against the mean of the per-seed values actually recorded in graph_out.csv
         per_seed_vals = []
         for seed in args.seeds:
-            vals = load_csv_values(f"{args.model.split('/')[-1]}_s{seed}", label, "cum_at_10")
+            vals = load_csv_values(f"{args.model.split('/')[-1]}_s{seed}", revision, label, "cum_at_10")
             per_seed_vals += vals or []
         if per_seed_vals:
             mean_per_seed = sum(per_seed_vals) / len(per_seed_vals)
-            print(f"[{label}] cum_at_10: from averaged curve = {cum_at_10:.6f}, mean of per-seed = {mean_per_seed:.6f} (should match)")
+            print(f"[{revision or 'no-revision'}][{label}] cum_at_10: from averaged curve = {cum_at_10:.6f}, mean of per-seed = {mean_per_seed:.6f} (should match)")
         plt.plot(cum.numpy(), label = label)
     plt.xlabel("Singular Values")
     plt.ylabel("Cumulative Proportion")
@@ -144,14 +160,14 @@ def main():
         cum = avg_lorenz[shape]
         gini = gini_coefficient(cum)
         torch.save(cum, f"lorenz_{label}_{avg_model_local}{tag}.pt")
-        write_result([label, "gini", gini])
+        write_result(revision, [label, "gini", gini])
         per_seed_vals = []
         for seed in args.seeds:
-            vals = load_csv_values(f"{args.model.split('/')[-1]}_s{seed}", label, "gini")
+            vals = load_csv_values(f"{args.model.split('/')[-1]}_s{seed}", revision, label, "gini")
             per_seed_vals += vals or []
         if per_seed_vals:
             mean_per_seed = sum(per_seed_vals) / len(per_seed_vals)
-            print(f"[{label}] gini: from averaged curve = {gini:.6f}, mean of per-seed = {mean_per_seed:.6f} (should match)")
+            print(f"[{revision or 'no-revision'}][{label}] gini: from averaged curve = {gini:.6f}, mean of per-seed = {mean_per_seed:.6f} (should match)")
         plt.plot(normalized_x(len(cum)).numpy(), cum.numpy(), label = f"{label} (Gini = {gini:.3f})")
     plt.plot([0, 1], [0, 1], linestyle = "--", color = "gray", label = "Equality")
     plt.xlabel("Cumulative Share of Singular Values")
@@ -170,6 +186,12 @@ def main():
     plt.ylabel("Average Singular Value")
     plt.legend()
     plt.savefig(f"average_singular_value_{avg_model_local}{tag}.pdf")
+
+    plt.close("all")
+
+def main():
+    for revision in revisions:
+        run_for_revision(revision)
 
 if __name__ == "__main__":
     main()
