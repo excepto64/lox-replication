@@ -88,8 +88,8 @@ def write_result(revision, row):
     with open(args.out, "a", newline="") as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(["model", "revision", "suffix", "seeds", "series", "metric", "value"])
-        writer.writerow([args.model, revision or "", args.suffix, "-".join(str(s) for s in args.seeds), *row])
+            writer.writerow(["model", "revision", "suffix", "series", "metric", "value"])
+        writer.writerow([args.model, revision or "", args.suffix, *row])
 
 def load_csv_values(model_local, revision, label, metric):
     if not os.path.exists(args.graph_csv):
