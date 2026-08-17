@@ -26,7 +26,7 @@ if [ "${stage}" = "A" ]; then
         ./src/run_stage_A.sh ${SCRATCH} ${seed} ${cluster} ${run}
         done
         source .venv/bin/activate
-        python src/average_seeds.py --model ${fine_tune_name} --seeds ${seeds} --shapes ${shapes} --steps
+        python src/average_seeds.py --model ${fine_tune_name} --seeds ${seeds} --shapes ${shapes}
     done
 elif [ "${stage}" = "B" ]; then
     for run in "${runs[@]}"; do
