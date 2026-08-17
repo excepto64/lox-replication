@@ -24,8 +24,8 @@ elif [ ${cluster} -eq 0 ]; then
     set -a; source ${SCRATCH}/.env; set +a
 fi
 
-# num_checkpoints=$((num_samples / (batch_size * save_steps)))
-num_checkpoints=1
+num_checkpoints=$((num_samples / (batch_size * save_steps)))
+# num_checkpoints=1
 steps=()
 for i in $(seq 1 ${num_checkpoints}); do
     steps+=($((i * save_steps)))
