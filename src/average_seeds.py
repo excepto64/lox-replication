@@ -26,10 +26,34 @@ un-revisioned models).
 
 import argparse
 import csv
+import math
 import os
+import statistics
 
 import matplotlib.pyplot as plt
 import torch
+
+# Two-tailed 95% critical values of the Student's t distribution, keyed by
+# degrees of freedom (n_seeds - 1). Falls back to the normal-approximation
+# value (1.96) for df not in the table (i.e. large seed counts).
+T_CRIT_95 = {
+    1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+    6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+    11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131,
+    16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+    25: 2.060, 30: 2.042,
+}
+
+def std_and_ci95(values):
+    """Sample standard deviation and 95% CI half-width (mean +/- ci95) over seeds."""
+    n = len(values)
+    if n < 2:
+        return float("nan"), float("nan")
+    std = statistics.stdev(values)
+    df = n - 1
+    t_crit = T_CRIT_95.get(df, 1.96)
+    ci95 = t_crit * std / math.sqrt(n)
+    return std, ci95
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, required=True, help="Base fine-tune name as it appears in the config (e.g. excepto64/lox_Llama-3.2-1B_hhrlhf_r0_1e), without the _s{seed} suffix measure_update.sh appends.")
@@ -43,7 +67,7 @@ revision_group = parser.add_mutually_exclusive_group()
 revision_group.add_argument("--revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) used when the per-seed curves were written, for a single checkpoint.")
 revision_group.add_argument("--steps", type=int, nargs="+", default=[30, 60, 90, 120, 150, 180, 210, 240], help="Checkpoint step numbers to average automatically. Revision for step N is read as step-N, matching measure_update.sh. Default: 30 60 ... 240.")
 parser.add_argument("--graph-csv", type=str, default="graph_out.csv", help="CSV written by graph.py, used to cross-check the recomputed Gini/cum_at_10 against the mean of the per-seed values.")
-parser.add_argument("--out", type=str, default="graph_out_seed_avg.csv", help="CSV file to append the seed-averaged summary numbers to.")
+parser.add_argument("--out", type=str, default="graph_out_seed_ave.csv", help="CSV file to append the seed-averaged summary numbers to.")
 
 args = parser.parse_args()
 
@@ -83,18 +107,20 @@ def gini_coefficient(lorenz_y, x = None):
     area_under_curve = torch.trapz(lorenz_y, x)
     return 1 - 2 * area_under_curve.item()
 
-def write_result(revision, row):
+def write_result(revision, label, metric, value, std = "", ci95 = ""):
     file_exists = os.path.exists(args.out)
     with open(args.out, "a", newline="") as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(["model", "revision", "suffix", "series", "metric", "value"])
-        writer.writerow([args.model, revision or "", args.suffix, *row])
+            writer.writerow(["model", "revision", "suffix", "series", "metric", "value", "std", "ci95"])
+        writer.writerow([args.model, revision or "", args.suffix, label, metric, value, std, ci95])
 
 def load_csv_values(model_local, revision, label, metric):
+    """Returns the single value for this (model, revision, suffix, series, metric) key.
+    graph_out.csv can contain duplicate rows (graph.py re-run without clearing the
+    file), so only the first match is used rather than accumulating repeats."""
     if not os.path.exists(args.graph_csv):
         return None
-    values = []
     with open(args.graph_csv, newline="") as f:
         for row in csv.DictReader(f):
             if (
@@ -105,10 +131,10 @@ def load_csv_values(model_local, revision, label, metric):
                 and row["metric"] == metric
             ):
                 try:
-                    values.append(float(row["value"]))
+                    return [float(row["value"])]
                 except ValueError:
                     pass
-    return values
+    return []
 
 def average_curves(prefix, revision):
     """Load {prefix}_{shape}_{model_local}{tag}.pt for every seed and shape, average elementwise."""
@@ -137,9 +163,16 @@ def run_for_revision(revision):
         idx = torch.where(cum > 0.8)[0]
         crossing_idx = idx[0].item() if len(idx) else "never crosses 0.8"
         cum_at_10 = cum[10].item()
-        write_result(revision, [label, "crossing_idx_0.8", crossing_idx])
-        write_result(revision, [label, "cum_at_10", cum_at_10])
-        # cross-check against the mean of the per-seed values actually recorded in graph_out.csv
+
+        # cross-check against the mean of the per-seed values actually recorded in graph_out.csv,
+        # and report the seed-to-seed spread (std, 95% CI) alongside the mean.
+        crossing_seed_vals = []
+        for seed in args.seeds:
+            vals = load_csv_values(f"{args.model.split('/')[-1]}_s{seed}", revision, label, "crossing_idx_0.8")
+            crossing_seed_vals += [v for v in (vals or []) if not isinstance(v, str)]
+        crossing_std, crossing_ci95 = std_and_ci95(crossing_seed_vals) if len(crossing_seed_vals) >= 2 else ("", "")
+        write_result(revision, label, "crossing_idx_0.8", crossing_idx, crossing_std, crossing_ci95)
+
         per_seed_vals = []
         for seed in args.seeds:
             vals = load_csv_values(f"{args.model.split('/')[-1]}_s{seed}", revision, label, "cum_at_10")
@@ -147,6 +180,8 @@ def run_for_revision(revision):
         if per_seed_vals:
             mean_per_seed = sum(per_seed_vals) / len(per_seed_vals)
             print(f"[{revision or 'no-revision'}][{label}] cum_at_10: from averaged curve = {cum_at_10:.6f}, mean of per-seed = {mean_per_seed:.6f} (should match)")
+        std, ci95 = std_and_ci95(per_seed_vals) if len(per_seed_vals) >= 2 else ("", "")
+        write_result(revision, label, "cum_at_10", cum_at_10, std, ci95)
         plt.plot(cum.numpy(), label = label)
     plt.xlabel("Singular Values")
     plt.ylabel("Cumulative Proportion")
@@ -160,7 +195,6 @@ def run_for_revision(revision):
         cum = avg_lorenz[shape]
         gini = gini_coefficient(cum)
         torch.save(cum, f"lorenz_{label}_{avg_model_local}{tag}.pt")
-        write_result(revision, [label, "gini", gini])
         per_seed_vals = []
         for seed in args.seeds:
             vals = load_csv_values(f"{args.model.split('/')[-1]}_s{seed}", revision, label, "gini")
@@ -168,6 +202,8 @@ def run_for_revision(revision):
         if per_seed_vals:
             mean_per_seed = sum(per_seed_vals) / len(per_seed_vals)
             print(f"[{revision or 'no-revision'}][{label}] gini: from averaged curve = {gini:.6f}, mean of per-seed = {mean_per_seed:.6f} (should match)")
+        std, ci95 = std_and_ci95(per_seed_vals) if len(per_seed_vals) >= 2 else ("", "")
+        write_result(revision, label, "gini", gini, std, ci95)
         plt.plot(normalized_x(len(cum)).numpy(), cum.numpy(), label = f"{label} (Gini = {gini:.3f})")
     plt.plot([0, 1], [0, 1], linestyle = "--", color = "gray", label = "Equality")
     plt.xlabel("Cumulative Share of Singular Values")
