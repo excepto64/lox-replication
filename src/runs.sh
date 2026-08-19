@@ -17,7 +17,7 @@ seeds=(2 0 26)
 cluster=0
 stage="A"
 
-# ./src/install.sh ${SCRATCH} ${cluster}
+./src/install.sh ${SCRATCH} ${cluster}
 
 if [ "${stage}" = "A" ]; then
     for run in "${runs[@]}"; do
@@ -25,8 +25,8 @@ if [ "${stage}" = "A" ]; then
         for seed in "${seeds[@]}"; do
         ./src/run_stage_A.sh ${SCRATCH} ${seed} ${cluster} ${run}
         done
-        source .venv/bin/activate
-        python src/average_seeds.py --model ${fine_tune_name} --seeds ${seeds} --shapes ${shapes}
+        # source .venv/bin/activate
+        # python src/average_seeds.py --model ${fine_tune_name} --seeds ${seeds} --shapes ${shapes}
     done
 elif [ "${stage}" = "B" ]; then
     for run in "${runs[@]}"; do
