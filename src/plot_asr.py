@@ -86,17 +86,17 @@ def main():
             capsize=3, capthick=1.2, elinewidth=1.2,
         )
 
-    ax.set_xlabel("Alignment-training step", color="#0b0b0b")
-    ax.set_ylabel("ASR", color="#0b0b0b")
-    ax.set_title("Attack success rate over alignment training", color="#0b0b0b")
+    ax.set_xlabel("Alignment-training step", color="#0b0b0b", fontsize=16)
+    ax.set_ylabel("ASR", color="#0b0b0b", fontsize=16)
+    ax.set_title("Attack success rate over alignment training", color="#0b0b0b", fontsize=16)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["left"].set_color("#c3c2b7")
     ax.spines["bottom"].set_color("#c3c2b7")
-    ax.tick_params(colors="#52514e")
+    ax.tick_params(colors="#52514e", labelsize=12)
     ax.grid(axis="y", color="#e1e0d9", linewidth=0.8)
     ax.set_axisbelow(True)
-    ax.legend(frameon=False)
+    ax.legend(frameon=False, fontsize=14)
 
     fig.tight_layout()
     fig.savefig(args.out, dpi=150)

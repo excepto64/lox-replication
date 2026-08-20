@@ -62,13 +62,24 @@ def gini_coefficient(lorenz_y, x = None):
     area_under_curve = torch.trapz(lorenz_y, x)
     return 1 - 2 * area_under_curve.item()
 
+def entry_shape(entry):
+    """Weight-space entries are {"shape": ..., "S": ...} dicts. Activation-space
+    (dWX) entries are bare S tensors, saved before the dict format existed;
+    since SVD(dWX) rank is always d_out (calibration tokens always outnumber
+    d_out -- see extract_activations.py), grouping by len(S) is equivalent
+    and loses nothing, so they're keyed by their own length instead."""
+    return tuple(sorted(entry["shape"])) if isinstance(entry, dict) else (entry.shape[0],)
+
+def entry_coeff(entry):
+    return entry["S"] if isinstance(entry, dict) else entry
+
 def average_by_shape(svd_coeffs, shape, transform = None):
     n = min(shape)
     total = torch.zeros(n)
     count = 0
     for entry in svd_coeffs:
-        if tuple(entry["shape"]) == shape:
-            coeff = entry["S"]
+        if entry_shape(entry) == shape:
+            coeff = entry_coeff(entry)
             count += 1
             total += transform(coeff) if transform else coeff
     return total / count if count else total

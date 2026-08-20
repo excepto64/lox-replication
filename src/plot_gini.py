@@ -69,11 +69,12 @@ for ax, shape in zip(axes, shapes):
             [g + c for g, c in zip(ginis, ci95s)],
             color=color, alpha=0.2,
         )
-    ax.set_title(shape)
-    ax.set_ylabel("Gini coefficient")
-    ax.legend()
+    ax.set_title(shape, fontsize=16)
+    ax.set_ylabel("Gini coefficient", fontsize=16)
+    ax.legend(fontsize=14, ncol=2)
+    ax.tick_params(axis='both', labelsize=14)
 
-axes[-1].set_xlabel("Step")
+axes[-1].set_xlabel("Step", fontsize=16)
 fig.tight_layout()
 fig.savefig(args.out)
 print(f"Wrote {args.out}")
