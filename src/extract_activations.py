@@ -16,7 +16,7 @@ What's different from their compute_dwx (i.e. make_low_rank): instead of
 computing a low-rank *projection* of activation_norms @ W^T and using it to
 edit weights in place (their pruning objective), we compute
 activation_norms @ dW^T -- dW being the aligned-minus-base weight
-difference, following this project's LoX.py/extract_ranks.py -- and take
+difference, following this project's LoX.py -- and take
 its full SVD, keeping only the singular values as a measurement. No weights
 are ever modified.
 
@@ -169,6 +169,7 @@ def clear_act_buffer(act_model):
 # ---------------------------------------------------------------------------
 
 def get_align_loader(data_path, nsamples, seed, tokenizer):
+    """Sample nsamples (prompt, response) pairs from data_path and tokenize into (input_ids, target_ids) pairs with the prompt masked to -100."""
     traindata = pd.read_csv(data_path)
     random.seed(seed)
     traindata_sampled = traindata.sample(n=nsamples, random_state=seed).reset_index(drop=True)
@@ -192,6 +193,7 @@ def get_align_loader(data_path, nsamples, seed, tokenizer):
 # ---------------------------------------------------------------------------
 
 def compute_dWX_svd(args, model, dW, tokenizer, device):
+    """Record per-layer calibration input activations via ActLinear, then SVD each layer's (activations @ dW^T) to get its singular value spectrum."""
     model = make_Act(model, verbose=False)
     model.requires_grad_(False)
     clear_act_buffer(model)
@@ -256,6 +258,7 @@ def compute_dWX_svd(args, model, dW, tokenizer, device):
 
 
 def main():
+    """Load base and aligned models, compute dW, run compute_dWX_svd, and save the resulting singular-value spectra."""
     tokenizer = AutoTokenizer.from_pretrained(args.model, revision=args.revision)
     aligned_model = AutoModelForCausalLM.from_pretrained(args.model, revision=args.revision, dtype=torch.float32, device_map=device)
     base_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32, device_map=device)

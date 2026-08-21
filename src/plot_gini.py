@@ -22,7 +22,7 @@ args = parser.parse_args()
 step_re = re.compile(r"step-(\d+)")
 
 def run_label(model):
-    # e.g. "excepto64/lox_Llama-3_2-1B_r0_1e_dpo_adam" -> "dpo_adam"
+    """Extract the "{method}_{optimiser}" run label from a full model name, e.g. "excepto64/lox_Llama-3_2-1B_r0_1e_dpo_adam" -> "dpo_adam"."""
     base = model.split("/")[-1]
     m = re.search(r"_(dpo|sft)_(adam|sgd)$", base)
     return f"{m.group(1)}_{m.group(2)}" if m else base

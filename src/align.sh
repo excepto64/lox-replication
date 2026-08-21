@@ -1,5 +1,16 @@
 #!/bin/bash
 # align.sh
+#
+# Runs one safety-alignment fine-tune (DPO or SFT, Adam or SGD, as set by
+# `config`) via OpenRLHF/deepspeed, on the PKU-SafeRLHF filtered dataset.
+# Checkpoints are periodically uploaded to the HF repo `fine_tune_name` as
+# they appear under ./checkpoint (a background watcher polls every 10 min,
+# plus a final sweep at the end), and the final model is uploaded too.
+# Called by run_stage_A.sh, not run directly.
+# Args: SCRATCH seed cluster config
+# `config` is one of the configs/*.cfg files, sourced to set model_name,
+# fine_tune_name, method, optimiser, lora, num_samples, num_epochs,
+# batch_size, save_steps.
 
 set -e
 
@@ -18,10 +29,10 @@ local_dir=${SCRATCH}/${local_name}
 source ${SCRATCH}/.venv/bin/activate
 if [ ${cluster} -eq 1 ]; then
     MASTER_PORT=$((29500 + ${SLURM_JOB_ID} % 1000))
-
+    # Activate environment
     set -a; source ~/lox-replication/.env; set +a
     source /home/htang2/toolchain-20251006/toolchain.rc
-
+    # Download necessary data.
     mkdir -p ${local_dir}
     # Other concurrent jobs write into ~/lox-replication/model/*, so tolerate
     # rsync's "some files vanished" warning (exit code 24) instead of aborting.
@@ -39,6 +50,7 @@ hf auth login --token ${HF_TOKEN} --no-add-to-git-credential
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 
 
+# Sets Lora parameters.
 if [ ${lora} -eq 0 ]; then
     GRAD_CKPT="--model.gradient_checkpointing_enable"
     ZERO_STAGE=3
@@ -47,6 +59,7 @@ else
     ZERO_STAGE=2
 fi
 
+# Uploads checkpoints to huggingface every 10 minutes.
 UPLOADED_MARKER=$(mktemp)
 STOP_FILE=$(mktemp -u)
 watch_and_upload_checkpoints() {
@@ -69,6 +82,7 @@ trap 'touch "${STOP_FILE}"; wait ${WATCHER_PID} 2>/dev/null' EXIT
 
 echo ${method}
 
+# Method and optimiser settings
 if [ "${method}" = "dpo" ]; then
     echo "Running DPO"
     if [ "${optimiser}" = "adam" ]; then
@@ -83,7 +97,11 @@ if [ "${method}" = "dpo" ]; then
     fi
 
     dataset_name=excepto64/PKU-SafeRLHF-filtered-dpo
-    # Modified from LoX paper.
+    # Run DPO aligning.
+    # Modified from LoX paper. 
+    # Gabriel Jacob Perin, Runjin Chen, Xuxi Chen, et al. Lox: Low-rank extrapolation 
+    # robustifies LLM safety against fine-tuning. In Second Conference on Language 
+    # Modeling, 2025. https://openreview.net/forum?id=ASS5YD4hL4.
     deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_dpo  \
         --model.model_name_or_path ${model_name} \
         --model.beta 0.1 \
@@ -112,7 +130,7 @@ if [ "${method}" = "dpo" ]; then
         --logger.logging_steps 1 \
         --logger.wandb.key ${WANDB_TOKEN} \
         ${GRAD_CKPT}
-elif [ "${method}" = "sft" ]; then # TO DO Investigate input/output key. 
+elif [ "${method}" = "sft" ]; then
     echo "Running SFT"
     if [ "${optimiser}" = "adam" ]; then
         optim="adam"
@@ -124,7 +142,7 @@ elif [ "${method}" = "sft" ]; then # TO DO Investigate input/output key.
         echo -e "Optimiser not recognised. \n Execution stopped."
         exit 1
     fi
-
+    # Run SFT aligning.
     dataset_name=excepto64/PKU-SafeRLHF-filtered-sft
     deepspeed --master_port ${MASTER_PORT} --module openrlhf.cli.train_sft  \
         --model.model_name_or_path ${model_name} \
@@ -173,9 +191,10 @@ for ckpt_dir in ./checkpoint/global_step*_hf; do
 done
 rm -f "${UPLOADED_MARKER}"
 
+# Upload mode
 mkdir -p ~/lox-replication/model/${local_name}/
 hf upload ${fine_tune_name} ./model
-
+# Pull back results from worker node.
 if [ ${cluster} -eq 1 ]; then
     rsync -a ${local_dir}/model ~/lox-replication/model/${local_name}/ || [ $? -eq 24 ]
 fi

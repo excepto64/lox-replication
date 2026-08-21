@@ -39,6 +39,7 @@ except OSError:
 
 
 def label_step(img, step):
+    """Return a copy of img with a "Step {step}" label drawn in the top-left corner."""
     img = img.copy()
     draw = ImageDraw.Draw(img)
     text = f"Step {step}"

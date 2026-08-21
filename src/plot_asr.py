@@ -35,6 +35,7 @@ COLORS = {
 
 
 def read_rows(csv_path):
+    """Yield (option, step, mean_asr, ci95_asr) for each non-attack row in average_asr.py's tidy CSV."""
     with open(csv_path, newline="") as f:
         for row in csv.DictReader(f):
             if row["is_attack"] == "True":
@@ -43,6 +44,7 @@ def read_rows(csv_path):
 
 
 def main():
+    """Plot ASR vs. alignment-training step (one line per option, baseline at step 0) with 95% CI bands."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--csv", default="results_asr.csv", help="Tidy ASR CSV produced by average_asr.py --csv.")
     parser.add_argument("--out", default="asr_by_step.pdf", help="Output image path.")

@@ -1,5 +1,9 @@
 #!/bin/bash
 # run_stage_A.sh
+#
+# Stage A: align a model on one config/seed, then measure its safety update
+# (rank/Gini) and pre-attack safety. Called by runs.sh/submit.sh, not run
+# directly. Args: SCRATCH seed cluster config
 
 SCRATCH=${1}
 seed=${2}

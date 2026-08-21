@@ -1,5 +1,14 @@
 #!/bin/bash
 # attack.sh
+#
+# Benign fine-tuning attack: SFTs an already-aligned model (config's
+# fine_tune_name, at `revision` if set) on the Alpaca instruction-following
+# dataset via attack.py, pushing the result to the HF Hub as
+# <fine_tune_name>_attack_alpaca. This is the "benign fine-tuning" threat
+# model this project studies -- fine-tuning for a legitimate task that
+# incidentally degrades safety.
+# Called by run_stage_B.sh, not run directly.
+# Args: SCRATCH seed cluster config
 
 set -e
 

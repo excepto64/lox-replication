@@ -1,18 +1,17 @@
+"""Build the matching SFT/DPO alignment datasets used by align.sh, from PKU-SafeRLHF.
+
+Filters PKU-Alignment/PKU-SafeRLHF down to rows where at least one response is
+safe (so both methods only ever train towards a safe target), then derives:
+- DPO: chosen = prompt + safer response, rejected = prompt + the other response.
+- SFT: input = prompt, output = safer response.
+Pushes both to the Hub as excepto64/PKU-SafeRLHF-filtered-{dpo,sft}, the
+datasets align.sh pulls by default. Not needed to reproduce the experiment --
+see the README's "Recreating the datasets" section.
+"""
+
 from datasets import load_dataset
 
 ds = load_dataset("PKU-Alignment/PKU-SafeRLHF", "default", split='train')
-
-"""
-Plan:
-
-1. Filter dataset to to only include rows where is_response_0_safe or is_response_1_safe is True.
-DPO:
-1. Concatenate prompt and response_{safer_response_id} into chosen.
-2. Concatenate prompt and response_{1-safer_response_id} into rejected.
-SFT:
-1. Set prompt to input
-2. Set response_{safer_response_id} to output.
-"""
 
 ds = ds.filter(lambda x: x['is_response_0_safe'] or x["is_response_1_safe"])
 

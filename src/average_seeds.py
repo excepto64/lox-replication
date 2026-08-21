@@ -1,10 +1,9 @@
 """
-Average the per-seed outputs of graph.py across seeds (option "c" from the
-Gini-averaging discussion: average the already per-matrix-averaged,
-normalized curves).
+Average the per-seed outputs of graph.py across seeds: average the already 
+per-matrix-averaged, normalized curves.
 
-This is mathematically equivalent to averaging the final Gini coefficients
-(option "d"), since normalization already happened per-seed inside graph.py
+This is mathematically equivalent to averaging the final Gini coefficients, 
+since normalization already happened per-seed inside graph.py
 before this script runs, and everything downstream (mean over matrices, mean
 over seeds, trapz-based Gini) is linear and therefore commutes. cum_at_10 is
 also a linear read of the curve so it commutes too. crossing_idx_0.8 does
@@ -72,6 +71,7 @@ parser.add_argument("--out", type=str, default="graph_out_seed_ave.csv", help="C
 args = parser.parse_args()
 
 def parse_shape(s):
+    """Parse a "d1,d2" CLI shape string into a sorted (min_dim, max_dim) tuple."""
     return tuple(sorted(int(x) for x in s.split(",")))
 
 shapes = [parse_shape(s) for s in args.shapes]
@@ -83,6 +83,7 @@ else:
     revisions = [f"step-{s}" for s in args.steps]
 
 def model_local_for_seed(seed, revision):
+    """Reconstruct the model_local name graph.py used for one seed/revision's saved curves."""
     base = args.model.split("/")[-1]
     local = f"{base}_s{seed}"
     if revision:
@@ -90,24 +91,29 @@ def model_local_for_seed(seed, revision):
     return local
 
 def avg_model_local_for(revision):
+    """Build the output name for a seed-averaged run, e.g. "<model>_savg-0-2-26[_step-N]"."""
     local = f"{args.model.split('/')[-1]}_savg-{'-'.join(str(s) for s in args.seeds)}"
     if revision:
         local += f"_{revision.replace('/', '-')}"
     return local
 
 def shape_tag(shape):
+    """Format a shape tuple as a filename-safe label, e.g. (512, 2048) -> "512x2048"."""
     return "x".join(str(d) for d in shape)
 
 def normalized_x(n):
+    """n evenly spaced points on [0, 1], for plotting/integrating a Lorenz curve of length n."""
     return torch.linspace(0, 1, n)
 
 def gini_coefficient(lorenz_y, x = None):
+    """Gini coefficient (1 - 2 * area under the Lorenz curve) of the averaged low-rankedness curve."""
     if x is None:
         x = normalized_x(len(lorenz_y))
     area_under_curve = torch.trapz(lorenz_y, x)
     return 1 - 2 * area_under_curve.item()
 
 def write_result(revision, label, metric, value, std = "", ci95 = ""):
+    """Append one seed-averaged metric row to args.out, writing a header first if the file is new."""
     file_exists = os.path.exists(args.out)
     with open(args.out, "a", newline="") as f:
         writer = csv.writer(f)
@@ -149,6 +155,7 @@ def average_curves(prefix, revision):
     return averaged
 
 def run_for_revision(revision):
+    """Average this revision's per-seed cum/lorenz/sum curves, re-derive Gini/crossing_idx/cum_at_10, cross-check against graph_out.csv, write results, and re-plot."""
     avg_model_local = avg_model_local_for(revision)
 
     avg_cum = average_curves("cum", revision)
@@ -226,6 +233,7 @@ def run_for_revision(revision):
     plt.close("all")
 
 def main():
+    """Run run_for_revision for every requested revision (a single --revision, or one per --steps)."""
     for revision in revisions:
         run_for_revision(revision)
 

@@ -1,5 +1,14 @@
 #!/bin/bash
 # install.sh
+#
+# Sets up the Python environment for a run: installs uv, creates a .venv
+# (Python 3.12), installs pinned dependencies (torch/flash-attn/openrlhf/
+# inspect-ai/trl/etc.), and applies src/patches/openrlhf-0.10.3-sgd.patch to
+# add SGD optimiser support to OpenRLHF's train_sft.py/train_dpo.py (the
+# patch is version-pinned to openrlhf==0.10.3; regenerate it if that pin
+# changes). On the cluster (cluster=1) this wipes and recreates SCRATCH first.
+# Called by runs.sh/submit.sh, not run directly.
+# Args: SCRATCH cluster
 
 SCRATCH=${1}
 cluster=${2}

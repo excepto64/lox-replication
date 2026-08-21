@@ -40,6 +40,7 @@ T_CRIT_95 = {
 
 
 def iter_asr_records(log_dirs):
+    """Yield one dict per advbench eval log found under log_dirs, with model size/method/optim/seed parsed from the model name and its ASR score."""
     for log_dir in log_dirs:
         for path in glob.glob(f"{log_dir}/*.eval"):
             log = read_eval_log(path)
@@ -87,6 +88,7 @@ def summarize(vals):
 
 
 def format_cell(vals):
+    """Format a list of ASR values as "mean±ci95 (n=...)" for the text table."""
     mean, ci, n = summarize(vals)
     if n > 1:
         return f"{mean:.4f}±{ci:.4f} (n={n})"
@@ -100,11 +102,13 @@ def revision_step(rev):
 
 
 def revision_key(rev):
+    """Sort key for revisions: numeric step ascending, with the post-attack (no-step) revision sorted last."""
     m = re.search(r"\d+", rev or "")
     return int(m.group()) if m else float("inf")
 
 
 def print_table(rows, headers):
+    """Print rows/headers as a plain aligned text table."""
     widths = [
         max(len(str(h)), *(len(str(row[i])) for row in rows)) if rows else len(str(h))
         for i, h in enumerate(headers)
@@ -119,6 +123,7 @@ def print_table(rows, headers):
 
 
 def main():
+    """Scan log_dirs for advbench eval logs, average ASR across seeds per (option, revision), and print a table or emit tidy CSV (--csv)."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "log_dirs", nargs="*", default=["inspect-logs", "results/logs"]

@@ -1,5 +1,15 @@
 """
-Modified from LoX paper.
+Adapted from LoX paper.
+Gabriel Jacob Perin, Runjin Chen, Xuxi Chen, et al. Lox: Low-rank extrapolation
+robustifies LLM safety against fine-tuning. In Second Conference on Language
+Modeling, 2025. https://openreview.net/forum?id=ASS5YD4hL4.
+
+Computes the safety update dW = W_aligned - W_base between a fine-tuned model
+(--model, optionally a LoRA adapter merged onto --base-model) and its base
+model, then SVDs every 2D weight matrix's update to get its singular value
+spectrum. Saves the per-layer shapes and singular values to
+SVD_coeffs_<model>[_<revision>].pt for downstream low-rankedness measurement
+(see calc_gini_asr.py / graph.py).
 """
 
 import argparse
@@ -12,8 +22,6 @@ from transformers import AutoModelForCausalLM
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, default="meta-llama/Llama-2-7b-chat-hf")
 parser.add_argument("--base-model", type=str, default="meta-llama/Llama-2-7b-hf")
-parser.add_argument("--k", type=int, default=0) # Top-ranks to extrapolate. k=0 extrapolates full rank.
-parser.add_argument("--coef", type=float, default=1.) # Extrapolation coefficient
 parser.add_argument("--lora", type=int, default=0)
 parser.add_argument("--revision", type=str, default=None, help="HF revision (e.g. checkpoint step tag) of --model to load.")
 
@@ -23,10 +31,8 @@ print(args)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def main():
-    k = args.k  # noqa: F841
-
+    """Load base and aligned models, diff their weights, SVD each matrix, and save the singular value spectra."""
     # Load the models
-    #tokenizer = AutoTokenizer.from_pretrained(aligned_path)
     pretrained_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32, device_map=device)
     if args.lora > 0:
         aligned_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=torch.float32, device_map=device)

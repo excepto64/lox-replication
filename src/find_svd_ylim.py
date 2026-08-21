@@ -23,18 +23,30 @@ args = parser.parse_args()
 tag = f"_{args.suffix}" if args.suffix else ""
 
 def parse_shape(s):
+    """Parse a "d1,d2" CLI shape string into a sorted (min_dim, max_dim) tuple."""
     return tuple(sorted(int(x) for x in s.split(",")))
 
 shapes = [parse_shape(s) for s in args.shapes]
 
+def entry_shape(entry):
+    """Weight-space entries are {"shape": ..., "S": ...} dicts. Legacy activation-space
+    (dWX) entries are bare S tensors, saved before the dict format existed; keyed by
+    their own length instead, matching graph.py's entry_shape."""
+    return tuple(sorted(entry["shape"])) if isinstance(entry, dict) else (entry.shape[0],)
+
+def entry_coeff(entry):
+    """Return an entry's singular-value tensor, regardless of dict or legacy bare-tensor format."""
+    return entry["S"] if isinstance(entry, dict) else entry
+
 def average_by_shape(svd_coeffs, shape):
+    """Average the singular-value spectra of all entries matching `shape`, elementwise."""
     n = min(shape)
     total = torch.zeros(n)
     count = 0
     for entry in svd_coeffs:
-        if tuple(entry["shape"]) == shape:
+        if entry_shape(entry) == shape:
             count += 1
-            total += entry["S"]
+            total += entry_coeff(entry)
     return total / count if count else total
 
 global_max = 0.0

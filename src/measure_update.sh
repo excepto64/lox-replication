@@ -1,5 +1,17 @@
 #!/bin/bash
 # measure_update.sh
+#
+# For every saved checkpoint of one aligned run, computes and plots the
+# low-rankedness of the safety update in weight space (LoX.py) and
+# activation space (extract_activations.py), i.e. the SVD_coeffs_*.pt files
+# consumed by calc_gini_asr.py. Phase 1 computes the SVDs per checkpoint;
+# phase 2 finds/fixes a shared y-axis max across checkpoints (unless
+# svd_ylim_max / svd_ylim_max_dwx are set in `config`) so plots are
+# comparable; phase 3 plots each checkpoint with that fixed scale and
+# assembles the per-step plots into GIFs (make_gifs.py).
+# Called by run_stage_A.sh, not run directly.
+# Args: SCRATCH seed cluster config
+# `config` additionally supplies num_samples, batch_size, save_steps, shapes.
 
 set -e
 
@@ -14,6 +26,7 @@ fine_tune_name=${fine_tune_name}_s${seed}
 local_name=${fine_tune_name##*/}
 local_dir=${SCRATCH}/${local_name}
 
+# Activate env and set final data upload.
 source ${SCRATCH}/.venv/bin/activate
 if [ ${cluster} -eq 1 ]; then
     set -a; source ~/lox-replication/.env; set +a
@@ -24,6 +37,7 @@ elif [ ${cluster} -eq 0 ]; then
     set -a; source ${SCRATCH}/.env; set +a
 fi
 
+# Iterate over checkpoints.
 num_checkpoints=$((num_samples / (batch_size * save_steps)))
 steps=()
 for i in $(seq 1 ${num_checkpoints}); do

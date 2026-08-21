@@ -1,6 +1,15 @@
-# Adapted from acc_alpaca.py and sft_gsm.py in
-# https://github.com/VITA-Group/LoX/tree/main/fine-tuning-attacks
+"""Benign fine-tuning attack: full-parameter SFT of an aligned model (--base-model,
+optionally at --revision) on a benign utility dataset (Alpaca or GSM8k), pushing the
+result to the HF Hub as --fine-tune-name. Used by attack.sh to simulate the "benign
+fine-tuning" threat model, where legitimate downstream fine-tuning accidentally
+degrades safety training.
 
+Adapted from acc_alpaca.py and sft_gsm.py in
+https://github.com/VITA-Group/LoX/tree/main/fine-tuning-attacks
+Gabriel Jacob Perin, Runjin Chen, Xuxi Chen, et al. Lox: Low-rank extrapolation
+robustifies LLM safety against fine-tuning. In Second Conference on Language
+Modeling, 2025. https://openreview.net/forum?id=ASS5YD4hL4.
+"""
 import argparse
 
 import torch
@@ -54,6 +63,7 @@ ALPACA_PROMPT_DICT = {
 
 
 def alpaca_training_prompt(example):
+    """Format one Alpaca example into the instruction-tuning prompt template, picking the with/without-input variant."""
     if example["input"] == "":
         return {'text': ALPACA_PROMPT_DICT['prompt_no_input'](example)}
     else:
@@ -61,6 +71,7 @@ def alpaca_training_prompt(example):
 
 
 def gsm8k_training_prompt(example):
+    """Format one GSM8k question/answer pair into the same instruction-tuning prompt template."""
     return {'text': f"<s>Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n### Instruction:\n{example['question']}\n\n### Response: {example['answer']}</s>"}
 
 
@@ -71,6 +82,7 @@ DATASETS = {
 
 
 def main():
+    """Load the base model/tokenizer, SFT-train it on the chosen dataset, and push the result to the HF Hub."""
     args = parser.parse_args()
     train_dataset = DATASETS[args.dataset]()
 

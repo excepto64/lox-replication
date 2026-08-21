@@ -1,3 +1,13 @@
+"""Join gini_attack.csv (pre-attack Gini per option/series) with asr_attack.csv
+(pre-/post-attack ASR per option) on "option", compute del_ASR = after - before
+(with propagated std), and scatter-plot Gini vs. del_ASR per method (DPO/SFT) --
+the core plot testing this project's central hypothesis, that lower-rank safety
+updates are more brittle under benign fine-tuning. Expects gini_attack.csv and
+asr_attack.csv (produced upstream, e.g. by average_seeds.py / average_asr.py) in
+the current working directory. Saves gini_vs_del_asr_dpo.pdf and
+gini_vs_del_asr_sft.pdf.
+"""
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt

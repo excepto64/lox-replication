@@ -1,5 +1,15 @@
 #!/bin/bash
 # measure_safety.sh
+#
+# Measures Attack Success Rate (ASR.py, an Inspect eval) on AdvBench-style
+# harmful prompts for one run. If attacked=0 (pre-attack), measures every
+# saved alignment checkpoint (step-N revisions) so ASR can be tracked through
+# training. If attacked=1 (post-attack), measures only the single final
+# attacked model (fine_tune_name with _attack_alpaca appended by attack.sh).
+# Called by run_stage_A.sh (attacked=0) and run_stage_B.sh (attacked=1), not
+# run directly.
+# Args: SCRATCH seed cluster config attacked
+# `config` additionally supplies num_samples, batch_size, save_steps.
 
 set -e
 
@@ -47,12 +57,6 @@ measure_one() {
     inspect eval src/ASR.py --model hf/${fine_tune_name} -T n=100 -T seed=2 \
         -M chat_template="\"{% for message in messages %}{{ message['content'] }}{% endfor %}\"" \
         -M do_sample=false "${model_revision_flag[@]}" "${tags_flag[@]}"
-    
-    echo Extracting ranks for revision ${revision}
-    python src/extract_ranks.py --base-model ${model_name} --model ${fine_tune_name} --k 6 --base "${revision_flag[@]}"
-
-    echo Analysing kl for revision ${revision}
-    src/analyse_kl.sh ${SCRATCH} ${seed} ${cluster} ${config} "${revision}"
 }
 
 if [ ${attacked} -eq 0 ]; then

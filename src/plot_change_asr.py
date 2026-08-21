@@ -25,6 +25,7 @@ COLORS = {
 
 
 def read_rows(csv_path):
+    """Read the before/after ASR CSV into {option: (before_mean, before_ci95, after_mean, after_ci95)}."""
     rows = {}
     with open(csv_path) as f:
         for row in csv.DictReader(f):
@@ -36,6 +37,7 @@ def read_rows(csv_path):
 
 
 def main():
+    """Plot a grouped before/after ASR bar chart, one cluster per option, with 95% CI error bars."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--csv", default="asr_attack.csv", help="Source file.")
     parser.add_argument("--out", default="asr_attack.pdf", help="Filename for plot.")
